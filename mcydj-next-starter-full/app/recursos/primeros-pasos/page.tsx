@@ -1,0 +1,1 @@
+export default function PrimerosPasos(){return (<section className='mx-auto max-w-3xl px-4 py-12 prose'><h1>Primeros pasos</h1><p>Publica aquí tus boletines y descargables.</p></section>);}
