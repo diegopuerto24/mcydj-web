@@ -1,1 +1,0 @@
-export default function Aviso(){return (<section className='mx-auto max-w-3xl px-4 py-12 prose'><h1>Aviso de Privacidad (borrador)</h1><p>Sustituir por texto conforme a LFPDPPP.</p></section>);}
