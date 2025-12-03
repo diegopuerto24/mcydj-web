@@ -1,12 +1,31 @@
 import { NextResponse } from "next/server";
 
+// GET: diagnóstico rápido (puedes dejarlo o quitarlo cuando termines)
+export async function GET() {
+  return NextResponse.json({
+    ok: true,
+    to: process.env.EMAIL_TO || "conecta@mcydj.mx",
+    from: process.env.EMAIL_FROM || "noreply@mcydj.mx"
+  });
+}
+
 export async function POST(req) {
   try {
     const body = await req.json();
-    const { name, company = "", email, phone = "", message } = body || {};
+    let { name, company = "", email, phone = "", message } = body || {};
+
+    // Normaliza y valida mínimos
+    name = (name || "").toString().trim();
+    company = (company || "").toString().trim();
+    email = (email || "").toString().trim();
+    phone = (phone || "").toString().trim();
+    message = (message || "").toString().trim();
 
     if (!name || !email || !message) {
       return NextResponse.json({ error: "Faltan campos obligatorios." }, { status: 400 });
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return NextResponse.json({ error: "Email no válido." }, { status: 400 });
     }
 
     const RESEND_API_KEY = process.env.RESEND_API_KEY;
@@ -20,43 +39,54 @@ export async function POST(req) {
       );
     }
 
-    const res = await fetch("https://api.resend.com/emails", {
+    // Arma el contenido del correo
+    const subject = `Nuevo contacto de ${name}`;
+    const html = `
+      <div style="font-family:system-ui,Arial,sans-serif;line-height:1.45">
+        <h2 style="margin:0 0 8px">Nuevo contacto desde mcydj.mx</h2>
+        <p style="margin:0 0 6px"><b>Nombre:</b> ${escapeHtml(name)}</p>
+        <p style="margin:0 0 6px"><b>Empresa:</b> ${escapeHtml(company)}</p>
+        <p style="margin:0 0 6px"><b>Email:</b> ${escapeHtml(email)}</p>
+        <p style="margin:0 0 6px"><b>Tel/WhatsApp:</b> ${escapeHtml(phone)}</p>
+        <p style="margin:10px 0 6px"><b>Mensaje:</b></p>
+        <pre style="white-space:pre-wrap;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px;margin:0">${escapeHtml(message)}</pre>
+      </div>
+    `;
+
+    // Llama a la API de Resend sin librerías adicionales
+    const r = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${RESEND_API_KEY}`,
+        Authorization: `Bearer ${RESEND_API_KEY}`,
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        from: EMAIL_FROM,
-        to: EMAIL_TO,
-        subject: `Nuevo contacto de ${name}`,
-        html: `
-          <div style="font-family:system-ui,Arial,sans-serif">
-            <h2>Nuevo contacto desde mcydj.mx</h2>
-            <p><b>Nombre:</b> ${name}</p>
-            <p><b>Empresa:</b> ${company}</p>
-            <p><b>Email:</b> ${email}</p>
-            <p><b>Tel/WhatsApp:</b> ${phone}</p>
-            <p><b>Mensaje:</b></p>
-            <pre>${(message || "").toString()}</pre>
-          </div>
-        `,
-        reply_to: email
+        from: EMAIL_FROM,       // Debe ser @mcydj.mx (dominio verificado)
+        to: EMAIL_TO,           // Destinatario final (p. ej. conecta@mcydj.mx)
+        subject,
+        html,
+        reply_to: email         // Para responderle directamente al interesado
       })
     });
 
-    if (!res.ok) {
-      const txt = await res.text();
+    if (!r.ok) {
+      const txt = await r.text();
       return NextResponse.json({ error: `Resend API error: ${txt}` }, { status: 502 });
     }
 
     return NextResponse.json({ ok: true });
   } catch (e) {
-    return NextResponse.json({ error: e.message || "Error" }, { status: 500 });
+    return NextResponse.json({ error: e?.message || "Error" }, { status: 500 });
   }
 }
 
-// Opcional: para probar rápido que existe la ruta
-export async function GET() {
-  return NextResponse.json({ ok: true });
+// Utilidad simple para evitar inyectar HTML
+function escapeHtml(s = "") {
+  return s
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 }
+
