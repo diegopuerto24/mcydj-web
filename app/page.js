@@ -8,7 +8,7 @@ export default function Home() {
         Aliados para el crecimiento y cumplimiento de tu organización.
       </p>
       <div style={{display:"flex", gap:12, flexWrap:"wrap"}}>
-        <a href="mailto:contacto@mcydj.mx" style={{padding:"10px 16px", background:"#0ea5e9", color:"#fff", borderRadius:12, textDecoration:"none"}}>
+        <a href="mailto:conecta@mcydj.mx" style={{padding:"10px 16px", background:"#0ea5e9", color:"#fff", borderRadius:12, textDecoration:"none"}}>
           Escribir un correo
         </a>
       </div>
