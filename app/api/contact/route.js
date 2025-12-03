@@ -5,7 +5,6 @@ export async function POST(req) {
     const body = await req.json();
     const { name, company = "", email, phone = "", message } = body || {};
 
-    // Validación mínima
     if (!name || !email || !message) {
       return NextResponse.json({ error: "Faltan campos obligatorios." }, { status: 400 });
     }
@@ -21,7 +20,6 @@ export async function POST(req) {
       );
     }
 
-    // Enviar correo via Resend API (sin dependencia)
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
@@ -49,14 +47,16 @@ export async function POST(req) {
 
     if (!res.ok) {
       const txt = await res.text();
-      return NextResponse.json(
-        { error: `Resend API error: ${txt}` },
-        { status: 502 }
-      );
+      return NextResponse.json({ error: `Resend API error: ${txt}` }, { status: 502 });
     }
 
     return NextResponse.json({ ok: true });
   } catch (e) {
     return NextResponse.json({ error: e.message || "Error" }, { status: 500 });
   }
+}
+
+// Opcional: para probar rápido que existe la ruta
+export async function GET() {
+  return NextResponse.json({ ok: true });
 }
