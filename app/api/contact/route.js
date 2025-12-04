@@ -1,26 +1,19 @@
+// app/api/contact/route.js
 import { NextResponse } from "next/server";
-
-// GET: diagnóstico rápido (puedes dejarlo o quitarlo cuando termines)
-export async function GET() {
-  return NextResponse.json({
-    ok: true,
-    to: process.env.EMAIL_TO || "conecta@mcydj.mx",
-    from: process.env.EMAIL_FROM || "noreply@mcydj.mx"
-  });
-}
 
 export async function POST(req) {
   try {
     const body = await req.json();
     let { name, company = "", email, phone = "", message } = body || {};
 
-    // Normaliza y valida mínimos
-    name = (name || "").toString().trim();
-    company = (company || "").toString().trim();
-    email = (email || "").toString().trim();
-    phone = (phone || "").toString().trim();
-    message = (message || "").toString().trim();
+    // Normaliza
+    name = (name ?? "").toString().trim();
+    company = (company ?? "").toString().trim();
+    email = (email ?? "").toString().trim();
+    phone = (phone ?? "").toString().trim();
+    message = (message ?? "").toString().trim();
 
+    // Validaciones mínimas
     if (!name || !email || !message) {
       return NextResponse.json({ error: "Faltan campos obligatorios." }, { status: 400 });
     }
@@ -39,7 +32,6 @@ export async function POST(req) {
       );
     }
 
-    // Arma el contenido del correo
     const subject = `Nuevo contacto de ${name}`;
     const html = `
       <div style="font-family:system-ui,Arial,sans-serif;line-height:1.45">
@@ -53,25 +45,25 @@ export async function POST(req) {
       </div>
     `;
 
-    // Llama a la API de Resend sin librerías adicionales
-    const r = await fetch("https://api.resend.com/emails", {
+    // Envío vía Resend (sin SDK)
+    const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${RESEND_API_KEY}`,
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        from: EMAIL_FROM,       // Debe ser @mcydj.mx (dominio verificado)
-        to: EMAIL_TO,           // Destinatario final (p. ej. conecta@mcydj.mx)
+        from: EMAIL_FROM,   // debe ser @mcydj.mx (dominio verificado)
+        to: EMAIL_TO,       // destinatario final (p. ej., conecta@mcydj.mx)
         subject,
         html,
-        reply_to: email         // Para responderle directamente al interesado
+        reply_to: email
       })
     });
 
-    if (!r.ok) {
-      const txt = await r.text();
-      return NextResponse.json({ error: `Resend API error: ${txt}` }, { status: 502 });
+    if (!res.ok) {
+      const detail = await res.text();
+      return NextResponse.json({ error: `Resend API error: ${detail}` }, { status: 502 });
     }
 
     return NextResponse.json({ ok: true });
@@ -80,13 +72,13 @@ export async function POST(req) {
   }
 }
 
-// Utilidad simple para evitar inyectar HTML
+// Utilidad para evitar inyección HTML en el cuerpo del correo
 function escapeHtml(s = "") {
   return s
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
 
