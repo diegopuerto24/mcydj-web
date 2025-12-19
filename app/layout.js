@@ -1,3 +1,4 @@
+import "./globals.css";
 export const metadata = {
   title: "MC&DJ Consultores | Asesoría contable, fiscal y financiera",
   description: "Asesoría contable, fiscal, financiera y evaluación de proyectos en México."
