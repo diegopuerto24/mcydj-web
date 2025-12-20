@@ -65,19 +65,19 @@ export default function RFP() {
           <div style={{display:"grid", gap:12, gridTemplateColumns:"1fr 1fr"}}>
             <div>
               <label style={{fontSize:12}}>Nombre *</label>
-              <input name="name" required style={inp}/>
+              <input classname="name" required style={inp}/>
             </div>
             <div>
               <label style={{fontSize:12}}>Empresa</label>
-              <input name="company" style={inp}/>
+              <input classname="company" style={inp}/>
             </div>
             <div>
               <label style={{fontSize:12}}>Email *</label>
-              <input name="email" type="email" required style={inp}/>
+              <input classname="email" type="email" required style={inp}/>
             </div>
             <div>
               <label style={{fontSize:12}}>Tel/WhatsApp</label>
-              <input name="phone" style={inp}/>
+              <input classname="phone" style={inp}/>
             </div>
           </div>
         )}
@@ -93,7 +93,7 @@ export default function RFP() {
                 "Evaluación de proyectos de inversión"
               ].map(s => (
                 <label key={s} style={{display:"flex", gap:8, alignItems:"center"}}>
-                  <input type="checkbox" name="services" value={s}/>
+                  <input type="checkbox" classname="services" value={s}/>
                   <span>{s}</span>
                 </label>
               ))}
@@ -115,19 +115,19 @@ export default function RFP() {
             </div>
             <div>
               <label style={{fontSize:12}}>Facturación aproximada (MXN)</label>
-              <input name="revenue" placeholder="p. ej. 1–5 MDP / 5–20 MDP / >20 MDP" style={inp}/>
+              <input classname="revenue" placeholder="p. ej. 1–5 MDP / 5–20 MDP / >20 MDP" style={inp}/>
             </div>
             <div>
               <label style={{fontSize:12}}>Régimen fiscal</label>
-              <input name="taxRegime" style={inp}/>
+              <input classname="taxRegime" style={inp}/>
             </div>
             <div>
               <label style={{fontSize:12}}>Plazo deseado / Urgencia</label>
-              <input name="timing" placeholder="p. ej. 2–4 semanas" style={inp}/>
+              <input classname="timing" placeholder="p. ej. 2–4 semanas" style={inp}/>
             </div>
             <div>
               <label style={{fontSize:12}}>Principal necesidad o dolor *</label>
-              <textarea name="pain" required rows={4} style={{...inp, height:"auto"}}/>
+              <textarea classname="pain" required rows={4} style={{...inp, height:"auto"}}/>
             </div>
           </div>
         )}
@@ -136,7 +136,7 @@ export default function RFP() {
           <div style={{display:"grid", gap:12}}>
             <div>
               <label style={{fontSize:12}}>Enlace a Drive/Docs (opcional)</label>
-              <input name="attachmentUrl" placeholder="https://drive.google.com/..." style={inp}/>
+              <input classname="attachmentUrl" placeholder="https://drive.google.com/..." style={inp}/>
             </div>
             <div>
               <label style={{fontSize:12}}>Notas adicionales</label>
