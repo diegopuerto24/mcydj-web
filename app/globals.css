@@ -116,3 +116,81 @@ a:hover{ text-decoration:underline; text-underline-offset: 4px; }
 @media (max-width: 900px){
   .grid-3{ grid-template-columns: 1fr; }
 }
+/* Header / Nav */
+.siteHeader{
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgba(255,249,125,.92);
+  backdrop-filter: blur(10px);
+  border-bottom: var(--border);
+}
+
+.headerInner{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 14px;
+  padding-top: 14px;
+  padding-bottom: 14px;
+}
+
+.brand{
+  display:flex;
+  align-items:center;
+  gap: 10px;
+  text-decoration:none;
+}
+
+.brandLogo{
+  width: 120px;
+  height: auto;
+  display:block;
+}
+
+.nav{
+  display:flex;
+  gap: 16px;
+  align-items:center;
+  font-weight: 700;
+}
+.nav a{
+  padding: 8px 10px;
+  border-radius: 14px;
+}
+.nav a:hover{
+  background: rgba(255,255,255,.35);
+  text-decoration:none;
+}
+
+.headerCtas{
+  display:flex;
+  gap: 10px;
+  align-items:center;
+}
+
+.siteFooter{
+  margin-top: 48px;
+  border-top: var(--border);
+  background: rgba(255,249,125,.65);
+}
+.footerInner{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap: 16px;
+}
+.footerLinks{
+  display:flex;
+  gap: 14px;
+  flex-wrap:wrap;
+}
+
+/* Responsive: en móvil ocultamos nav y dejamos CTA */
+@media (max-width: 900px){
+  .nav{ display:none; }
+  .brandLogo{ width: 105px; }
+  .headerCtas .btn-secondary{ display:none; } /* deja solo el CTA principal */
+  .footerInner{ flex-direction:column; }
+}
+
