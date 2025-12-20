@@ -143,9 +143,10 @@ a:hover{ text-decoration:underline; text-underline-offset: 4px; }
 }
 
 .brandLogo{
-  width: 120px;
+  width: 140px;
   height: auto;
   display:block;
+  background: transparent;
 }
 
 .nav{
