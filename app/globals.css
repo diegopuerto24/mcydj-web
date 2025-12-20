@@ -186,11 +186,34 @@ a:hover{ text-decoration:underline; text-underline-offset: 4px; }
   flex-wrap:wrap;
 }
 
-/* Responsive: en móvil ocultamos nav y dejamos CTA */
-@media (max-width: 900px){
-  .nav{ display:none; }
-  .brandLogo{ width: 105px; }
-  .headerCtas .btn-secondary{ display:none; } /* deja solo el CTA principal */
-  .footerInner{ flex-direction:column; }
+/* Desktop vs Mobile nav */
+.navDesktop{ display:flex; }
+
+.menuBtn{ display:none; } /* oculto en escritorio */
+
+.mobileMenu{
+  border-top: var(--border);
+  background: rgba(255,249,125,.96);
 }
 
+.mobileMenuInner{
+  display:grid;
+  gap: 10px;
+  padding-top: 12px;
+  padding-bottom: 16px;
+}
+
+.mobileMenuInner a{
+  font-weight: 800;
+  padding: 10px 12px;
+  border-radius: 16px;
+}
+.mobileMenuInner a:hover{
+  background: rgba(255,255,255,.35);
+  text-decoration:none;
+}
+
+@media (max-width: 900px){
+  .navDesktop{ display:none; }
+  .menuBtn{ display:inline-flex; }
+}
