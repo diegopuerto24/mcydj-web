@@ -5,8 +5,11 @@ import { useMemo, useState } from "react";
 
 const STEPS = ["Contacto", "Servicios", "Negocio", "Adjuntos"];
 
-export default function RFP() {
-  const REGIMENES_SAT = [
+/**
+ * Catálogo SAT (c_RegimenFiscal).
+ * Aquí lo mantenemos en frontend por ahora; después lo movemos a /lib/sat.js para compartirlo con el backend.
+ */
+const REGIMENES_SAT = [
   { code: "601", label: "General de Ley Personas Morales" },
   { code: "603", label: "Personas Morales con Fines no Lucrativos" },
   { code: "605", label: "Sueldos y Salarios e Ingresos Asimilados a Salarios" },
@@ -27,29 +30,52 @@ export default function RFP() {
   { code: "625", label: "Actividades Empresariales con ingresos a través de Plataformas Tecnológicas" },
   { code: "626", label: "Régimen Simplificado de Confianza" }
 ];
+
+// Filtro simple por tipo de contribuyente (para UX).
+// Nota: no es una regla fiscal perfecta para todos los casos; es una guía práctica para el usuario.
+const REGIMENES_POR_TIPO = {
+  PM: new Set(["601", "603", "620", "622", "623", "624"]), // Personas Morales
+  PF: new Set(["605", "606", "607", "608", "610", "611", "612", "614", "615", "616", "621", "625", "626"]) // Personas Físicas
+};
+
+export default function RFP() {
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [ok, setOk] = useState("");
   const [err, setErr] = useState("");
+  const [folio, setFolio] = useState(""); // lo llenaremos cuando backend devuelva { id }
 
   const [data, setData] = useState({
     name: "",
     company: "",
     email: "",
     phone: "",
+
     services: [],
+
     sector: "PyME",
     revenue: "",
+
+    taxPayerType: "", // PF | PM
     taxRegime: "",
+
     timing: "",
     pain: "",
+
     attachmentUrl: "",
     notes: ""
   });
 
+  const filteredRegimes = useMemo(() => {
+    if (!data.taxPayerType) return REGIMENES_SAT;
+    const allowed = REGIMENES_POR_TIPO[data.taxPayerType];
+    return REGIMENES_SAT.filter(r => allowed?.has(r.code));
+  }, [data.taxPayerType]);
+
   const canNext = useMemo(() => {
     if (step === 0) return data.name.trim() && data.email.trim();
-    if (step === 2) return data.pain.trim() && data.taxRegime;
+    if (step === 1) return data.services.length >= 1; // Servicios obligatorio
+    if (step === 2) return data.pain.trim() && data.taxPayerType && data.taxRegime;
     return true;
   }, [step, data]);
 
@@ -57,12 +83,21 @@ export default function RFP() {
     if (!canNext) return;
     setStep((s) => Math.min(s + 1, STEPS.length - 1));
   }
+
   function prev() {
     setStep((s) => Math.max(s - 1, 0));
   }
 
   function setField(key, value) {
     setData((d) => ({ ...d, [key]: value }));
+  }
+
+  function setTaxPayerType(value) {
+    setData((d) => ({
+      ...d,
+      taxPayerType: value,
+      taxRegime: "" // al cambiar PF/PM, reseteamos régimen para evitar inconsistencias
+    }));
   }
 
   function toggleService(service) {
@@ -77,7 +112,10 @@ export default function RFP() {
 
   async function onSubmit(e) {
     e.preventDefault();
-    setOk(""); setErr(""); setLoading(true);
+    setOk("");
+    setErr("");
+    setFolio("");
+    setLoading(true);
 
     try {
       const res = await fetch("/api/rfp", {
@@ -86,26 +124,37 @@ export default function RFP() {
         body: JSON.stringify(data)
       });
       const j = await res.json();
-      if (!res.ok) throw new Error(j.error || "Error al enviar");
+      if (!res.ok) throw new Error(j.error || "No se pudo enviar. Intenta de nuevo.");
 
-      setOk("¡Gracias! Hemos recibido tu solicitud. Te contactaremos pronto.");
+      // Si luego backend manda {id}, lo mostramos.
+      if (j?.id) setFolio(String(j.id));
+
+      setOk("Listo. Recibimos tu solicitud y te contactaremos a la brevedad por correo o WhatsApp.");
+
       setData({
         name: "",
         company: "",
         email: "",
         phone: "",
+
         services: [],
+
         sector: "PyME",
         revenue: "",
+
+        taxPayerType: "",
         taxRegime: "",
+
         timing: "",
         pain: "",
+
         attachmentUrl: "",
         notes: ""
       });
+
       setStep(0);
     } catch (e) {
-      setErr(e.message || "Ocurrió un error");
+      setErr(e?.message || "Ocurrió un error. Si persiste, escríbenos a conecta@mcydj.mx.");
     } finally {
       setLoading(false);
     }
@@ -118,73 +167,80 @@ export default function RFP() {
 
       <div style={{ height: 16 }} />
 
-      <ol style={{display:"flex", gap:8, listStyle:"none", padding:0, margin:"0 0 16px", flexWrap:"wrap"}}>
+      <ol style={{ display: "flex", gap: 8, listStyle: "none", padding: 0, margin: "0 0 16px", flexWrap: "wrap" }}>
         {STEPS.map((t, i) => (
-          <li key={t} style={{
-            padding:"6px 10px", borderRadius:999,
-            background: i === step ? "var(--mcydj-ink)" : "rgba(255,255,255,.35)",
-            color: i === step ? "var(--mcydj-yellow)" : "var(--mcydj-ink)",
-            border: "var(--border)",
-            fontSize:12,
-            fontWeight:800
-          }}>
+          <li
+            key={t}
+            style={{
+              padding: "6px 10px",
+              borderRadius: 999,
+              background: i === step ? "var(--mcydj-ink)" : "rgba(255,255,255,.35)",
+              color: i === step ? "var(--mcydj-yellow)" : "var(--mcydj-ink)",
+              border: "var(--border)",
+              fontSize: 12,
+              fontWeight: 800
+            }}
+          >
             {i + 1}. {t}
           </li>
         ))}
       </ol>
 
       <div className="card">
-        <form onSubmit={onSubmit} style={{display:"grid", gap:12}}>
+        <form onSubmit={onSubmit} style={{ display: "grid", gap: 12 }}>
           {step === 0 && (
-            <div style={{display:"grid", gap:12, gridTemplateColumns:"1fr 1fr"}}>
+            <div style={{ display: "grid", gap: 12, gridTemplateColumns: "1fr 1fr" }}>
               <div>
-                <label style={{fontSize:12}}>Nombre *</label>
-                <input className="input" value={data.name} onChange={(e)=>setField("name", e.target.value)} required />
+                <label style={{ fontSize: 12 }}>Nombre *</label>
+                <input className="input" value={data.name} onChange={(e) => setField("name", e.target.value)} required />
               </div>
               <div>
-                <label style={{fontSize:12}}>Empresa</label>
-                <input className="input" value={data.company} onChange={(e)=>setField("company", e.target.value)} />
+                <label style={{ fontSize: 12 }}>Empresa</label>
+                <input className="input" value={data.company} onChange={(e) => setField("company", e.target.value)} />
               </div>
               <div>
-                <label style={{fontSize:12}}>Email *</label>
-                <input className="input" type="email" value={data.email} onChange={(e)=>setField("email", e.target.value)} required />
+                <label style={{ fontSize: 12 }}>Email *</label>
+                <input className="input" type="email" value={data.email} onChange={(e) => setField("email", e.target.value)} required />
               </div>
               <div>
-                <label style={{fontSize:12}}>Tel/WhatsApp</label>
-                <input className="input" value={data.phone} onChange={(e)=>setField("phone", e.target.value)} />
+                <label style={{ fontSize: 12 }}>Tel/WhatsApp</label>
+                <input className="input" value={data.phone} onChange={(e) => setField("phone", e.target.value)} />
               </div>
             </div>
           )}
 
           {step === 1 && (
-            <div style={{display:"grid", gap:8}}>
-              <label style={{fontSize:12}}>Servicios requeridos</label>
-              <div style={{display:"grid", gap:6}}>
+            <div style={{ display: "grid", gap: 8 }}>
+              <label style={{ fontSize: 12 }}>Servicios requeridos *</label>
+
+              <div style={{ display: "grid", gap: 6 }}>
                 {[
                   "Contabilidad/Impuestos",
                   "Consultoría Organizacional",
                   "Finanzas corporativas (WACC, CAPM, valuación)",
                   "Evaluación de proyectos de inversión",
                   "Capacitación"
-                ].map(s => (
-                  <label key={s} style={{display:"flex", gap:8, alignItems:"center"}}>
-                    <input
-                      type="checkbox"
-                      checked={data.services.includes(s)}
-                      onChange={() => toggleService(s)}
-                    />
+                ].map((s) => (
+                  <label key={s} style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                    <input type="checkbox" checked={data.services.includes(s)} onChange={() => toggleService(s)} />
                     <span>{s}</span>
                   </label>
                 ))}
               </div>
+
+              {data.services.length === 0 && (
+                <div style={{ fontSize: 12, color: "rgba(22,21,14,.72)" }}>
+                  Selecciona al menos 1 servicio para continuar.
+                </div>
+              )}
             </div>
           )}
 
           {step === 2 && (
-            <div style={{display:"grid", gap:12}}>
+            <div style={{ display: "grid", gap: 12 }}>
               <div>
-                <label style={{fontSize:12}}>Sector</label>
-                <select className="select" value={data.sector} onChange={(e)=>setField("sector", e.target.value)}>
+                <label style={{ fontSize: 12 }}>Sector</label>
+                <select className="select" value={data.sector} onChange={(e) => setField("sector", e.target.value)}>
                   <option>PyME</option>
                   <option>Salud</option>
                   <option>Inmobiliario/Construcción</option>
@@ -192,51 +248,83 @@ export default function RFP() {
                   <option>Servicios profesionales</option>
                 </select>
               </div>
+
               <div>
-                <label style={{fontSize:12}}>Facturación aproximada (MXN)</label>
-                <input className="input" value={data.revenue} onChange={(e)=>setField("revenue", e.target.value)} placeholder="p. ej. 1–5 MDP / 5–20 MDP / >20 MDP" />
+                <label style={{ fontSize: 12 }}>Facturación aproximada (MXN)</label>
+                <input
+                  className="input"
+                  value={data.revenue}
+                  onChange={(e) => setField("revenue", e.target.value)}
+                  placeholder="p. ej. 1–5 MDP / 5–20 MDP / >20 MDP"
+                />
               </div>
+
               <div>
-                <label style={{fontSize:12}}>Régimen fiscal</label>
+                <label style={{ fontSize: 12 }}>Tipo de contribuyente *</label>
+                <select className="select" value={data.taxPayerType} onChange={(e) => setTaxPayerType(e.target.value)} required>
+                  <option value="">Selecciona una opción</option>
+                  <option value="PF">Persona Física</option>
+                  <option value="PM">Persona Moral</option>
+                </select>
+              </div>
+
+              <div>
+                <label style={{ fontSize: 12 }}>Régimen fiscal (SAT) *</label>
                 <select
-  className="select"
-  value={data.taxRegime}
-  onChange={(e) => setField("taxRegime", e.target.value)}
-  required
->
-  <option value="">Selecciona tu régimen fiscal (SAT)</option>
-  {REGIMENES_SAT.map(r => (
-    <option key={r.code} value={r.code}>
-      {r.code} — {r.label}
-    </option>
-  ))}
-</select>
+                  className="select"
+                  value={data.taxRegime}
+                  onChange={(e) => setField("taxRegime", e.target.value)}
+                  required
+                  disabled={!data.taxPayerType}
+                  title={!data.taxPayerType ? "Primero selecciona Tipo de contribuyente" : ""}
+                >
+                  <option value="">
+                    {!data.taxPayerType ? "Selecciona primero Tipo de contribuyente" : "Selecciona tu régimen fiscal (SAT)"}
+                  </option>
+                  {filteredRegimes.map((r) => (
+                    <option key={r.code} value={r.code}>
+                      {r.code} — {r.label}
+                    </option>
+                  ))}
+                </select>
               </div>
+
               <div>
-                <label style={{fontSize:12}}>Plazo deseado / Urgencia</label>
-                <input className="input" value={data.timing} onChange={(e)=>setField("timing", e.target.value)} placeholder="p. ej. 2–4 semanas" />
+                <label style={{ fontSize: 12 }}>Plazo deseado / Urgencia</label>
+                <input
+                  className="input"
+                  value={data.timing}
+                  onChange={(e) => setField("timing", e.target.value)}
+                  placeholder="p. ej. 2–4 semanas"
+                />
               </div>
+
               <div>
-                <label style={{fontSize:12}}>Principal necesidad o dolor *</label>
-                <textarea className="textarea" rows={5} value={data.pain} onChange={(e)=>setField("pain", e.target.value)} required />
+                <label style={{ fontSize: 12 }}>Principal necesidad o dolor *</label>
+                <textarea className="textarea" rows={5} value={data.pain} onChange={(e) => setField("pain", e.target.value)} required />
               </div>
             </div>
           )}
 
           {step === 3 && (
-            <div style={{display:"grid", gap:12}}>
+            <div style={{ display: "grid", gap: 12 }}>
               <div>
-                <label style={{fontSize:12}}>Enlace a Drive/Docs (opcional)</label>
-                <input className="input" value={data.attachmentUrl} onChange={(e)=>setField("attachmentUrl", e.target.value)} placeholder="https://drive.google.com/..." />
+                <label style={{ fontSize: 12 }}>Enlace a Drive/Docs (opcional)</label>
+                <input
+                  className="input"
+                  value={data.attachmentUrl}
+                  onChange={(e) => setField("attachmentUrl", e.target.value)}
+                  placeholder="https://drive.google.com/..."
+                />
               </div>
               <div>
-                <label style={{fontSize:12}}>Notas adicionales</label>
-                <textarea className="textarea" rows={4} value={data.notes} onChange={(e)=>setField("notes", e.target.value)} />
+                <label style={{ fontSize: 12 }}>Notas adicionales</label>
+                <textarea className="textarea" rows={4} value={data.notes} onChange={(e) => setField("notes", e.target.value)} />
               </div>
             </div>
           )}
 
-          <div style={{display:"flex", gap:10, justifyContent:"space-between", flexWrap:"wrap", marginTop: 6}}>
+          <div style={{ display: "flex", gap: 10, justifyContent: "space-between", flexWrap: "wrap", marginTop: 6 }}>
             <div>
               {step > 0 && (
                 <button type="button" className="btn btn-secondary" onClick={prev}>
@@ -245,7 +333,7 @@ export default function RFP() {
               )}
             </div>
 
-            <div style={{display:"flex", gap:10, flexWrap:"wrap"}}>
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
               {step < STEPS.length - 1 && (
                 <button type="button" className="btn btn-primary" onClick={next} disabled={!canNext}>
                   Siguiente
@@ -259,10 +347,16 @@ export default function RFP() {
             </div>
           </div>
 
-          {ok && <div style={{color:"#16a34a"}}>{ok}</div>}
-          {err && <div style={{color:"#dc2626"}}>{err}</div>}
+          {ok && (
+            <div style={{ color: "#16a34a" }}>
+              {ok}
+              {folio ? <div style={{ marginTop: 6 }}>Folio: <strong>{folio}</strong></div> : null}
+            </div>
+          )}
+          {err && <div style={{ color: "#dc2626" }}>{err}</div>}
         </form>
       </div>
     </section>
   );
 }
+
