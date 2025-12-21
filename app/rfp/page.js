@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 
 import { useEffect, useMemo, useState } from "react";
 ;
+;
 
 const STEPS = ["Contacto", "Servicios", "Negocio", "Adjuntos"];
 
@@ -40,6 +41,13 @@ const REGIMENES_POR_TIPO = {
 };
 
 export default function RFP() {
+   const SERVICE_OPTIONS = [
+    "Contabilidad/Impuestos",
+    "Consultoría Organizacional",
+    "Finanzas corporativas (WACC, CAPM, valuación)",
+    "Evaluación de proyectos de inversión",
+    "Capacitación"
+  ];
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [ok, setOk] = useState("");
@@ -66,7 +74,61 @@ export default function RFP() {
     attachmentUrl: "",
     notes: ""
   });
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const raw = (params.get("service") || "").trim();
+      if (!raw) return;
 
+      const normalize = (s) =>
+        String(s)
+          .toLowerCase()
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .replace(/\s+/g, " ")
+          .trim();
+
+      const n = normalize(raw);
+
+      const aliasMap = [
+        { match: ["contabilidad"], value: "Contabilidad/Impuestos" },
+        { match: ["impuestos"], value: "Contabilidad/Impuestos" },
+        { match: ["consultoria", "organizacional"], value: "Consultoría Organizacional" },
+        { match: ["finanzas", "corporativas"], value: "Finanzas corporativas (WACC, CAPM, valuación)" },
+        { match: ["wacc"], value: "Finanzas corporativas (WACC, CAPM, valuación)" },
+        { match: ["capm"], value: "Finanzas corporativas (WACC, CAPM, valuación)" },
+        { match: ["valuacion"], value: "Finanzas corporativas (WACC, CAPM, valuación)" },
+        { match: ["evaluacion", "proyectos"], value: "Evaluación de proyectos de inversión" },
+        { match: ["proyectos", "inversion"], value: "Evaluación de proyectos de inversión" },
+        { match: ["capacitacion"], value: "Capacitación" }
+      ];
+
+      // 1) Si coincide exacto con una opción, úsalo
+      let selected = "";
+      const exact = SERVICE_OPTIONS.find((opt) => normalize(opt) === n);
+      if (exact) selected = exact;
+
+      // 2) Si no coincide exacto, intenta por palabras clave
+      if (!selected) {
+        for (const a of aliasMap) {
+          if (a.match.every((w) => n.includes(w))) {
+            selected = a.value;
+            break;
+          }
+        }
+      }
+
+      if (!selected) return;
+
+      setData((d) => {
+        const current = Array.isArray(d.services) ? d.services : [];
+        if (current.includes(selected)) return d;
+        return { ...d, services: [...current, selected] };
+      });
+    } catch {
+      // no hacemos nada si algo falla; nunca rompemos el formulario por esto
+    }
+  }, []);
   const filteredRegimes = useMemo(() => {
     if (!data.taxPayerType) return REGIMENES_SAT;
     const allowed = REGIMENES_POR_TIPO[data.taxPayerType];
@@ -218,12 +280,7 @@ if (j?.ack === false) {
 
               <div style={{ display: "grid", gap: 6 }}>
                 {[
-                  "Contabilidad/Impuestos",
-                  "Consultoría Organizacional",
-                  "Finanzas corporativas (WACC, CAPM, valuación)",
-                  "Evaluación de proyectos de inversión",
-                  "Capacitación"
-                ].map((s) => (
+                  SERVICE_OPTIONS.map(s => (].map(s=>(
                   <label key={s} style={{ display: "flex", gap: 8, alignItems: "center" }}>
                     <input type="checkbox" checked={data.services.includes(s)} onChange={() => toggleService(s)} />
                     <span>{s}</span>
