@@ -128,7 +128,9 @@ export default function RFP() {
 
       // Si luego backend manda {id}, lo mostramos.
       if (j?.id) setFolio(String(j.id));
-
+if (j?.ack === false) {
+  setErr("Tu solicitud se registró, pero el acuse por correo no pudo enviarse. Si no te llega en unos minutos, revisa Spam o escríbenos a conecta@mcydj.mx.");
+}
       setOk("Listo. Recibimos tu solicitud y te contactaremos a la brevedad por correo o WhatsApp.");
 
       setData({
