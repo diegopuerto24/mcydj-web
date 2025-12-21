@@ -1,5 +1,5 @@
 export const metadata = {
-  title: "Nosotros | MC&DJ",
+  title: "Nosotros x | MC&DJ",
   description:
     "MC&DJ es una firma de asesoría contable, fiscal, financiera, consultoría organizacional y evaluación de proyectos, con enfoque en información confiable para la toma de decisiones."
 };
