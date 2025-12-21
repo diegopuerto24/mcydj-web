@@ -46,12 +46,101 @@ export async function POST(req) {
     `;
 
     // Envío vía Resend (sin SDK)
-    const res = await fetch("https://api.resend.com/emails", {
+        // 1) Email interno (MC&DJ)
+    const subject = `${folio} | ${priority} | RFP: ${serviceMain} — ${name}${company ? ` (${company})` : ""}`;
+
+    const internalRes = await fetch("https://api.resend.com/emails", {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${RESEND_API_KEY}`,
-        "Content-Type": "application/json"
-      },
+      headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        from: EMAIL_FROM,
+        to: EMAIL_TO,
+        subject,
+        html,
+        reply_to: email
+      })
+    });
+
+    if (!internalRes.ok) {
+      const detail = await internalRes.text();
+      return NextResponse.json({ error: `Resend API error (interno): ${detail}` }, { status: 502 });
+    }
+
+    // 2) Acuse al cliente (no debe bloquear operación si falla)
+    const ACK_FROM = process.env.ACK_FROM || EMAIL_FROM;
+    const ACK_BCC = process.env.ACK_BCC || ""; // opcional, ej: "conecta@mcydj.mx"
+
+    const ackSubject = `Recibimos tu solicitud — Folio ${folio}`;
+    const ackHtml = `
+      <div style="font-family:system-ui,Arial,sans-serif;line-height:1.55">
+        <h2 style="margin:0 0 8px">Gracias por contactarnos</h2>
+        <p style="margin:0 0 12px">
+          Recibimos tu solicitud de propuesta (RFP). Nuestro equipo la revisará y te contactaremos a la brevedad.
+        </p>
+
+        <div style="padding:12px;border:1px solid #e2e8f0;border-radius:12px;background:#f8fafc;margin:14px 0">
+          <div style="font-size:12px;color:#334155">Folio de seguimiento</div>
+          <div style="font-size:18px;font-weight:800">${esc(folio)}</div>
+          <div style="margin-top:8px;font-size:14px;color:#334155">
+            Servicio principal: <b>${esc(serviceMain)}</b><br/>
+            Prioridad asignada: <b>${esc(priority)}</b>
+          </div>
+        </div>
+
+        <p style="margin:0 0 10px"><b>Para agilizar tu propuesta</b>, si lo tienes a la mano puedes preparar:</p>
+        <ul style="margin:0 0 14px;padding-left:18px">
+          <li>Constancia de Situación Fiscal (CSF)</li>
+          <li>Estados financieros recientes (si aplica)</li>
+          <li>Descripción breve de tu necesidad principal</li>
+        </ul>
+
+        <p style="margin:0 0 14px">
+          Si necesitas complementar información, responde a este correo o escríbenos a
+          <a href="mailto:conecta@mcydj.mx">conecta@mcydj.mx</a>.
+        </p>
+
+        <p style="margin:0;color:#64748b;font-size:12px">
+          MC&amp;DJ Consultores y Evaluadores Profesionales — mcydj.mx
+        </p>
+      </div>
+    `;
+
+    let ackOk = false;
+    let ackError = "";
+
+    try {
+      const toField = [email];
+      const payload = {
+        from: ACK_FROM,
+        to: toField,
+        subject: ackSubject,
+        html: ackHtml,
+        reply_to: "conecta@mcydj.mx"
+      };
+      if (ACK_BCC) payload.bcc = [ACK_BCC];
+
+      const ackRes = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      if (!ackRes.ok) {
+        ackError = await ackRes.text();
+      } else {
+        ackOk = true;
+      }
+    } catch (e) {
+      ackError = e?.message || "Fallo acuse";
+    }
+
+    return NextResponse.json({
+      ok: true,
+      id: folio,
+      priority,
+      ack: ackOk,
+      ...(ackOk ? {} : { ackError })
+    });
       body: JSON.stringify({
         from: EMAIL_FROM,   // debe ser @mcydj.mx (dominio verificado)
         to: EMAIL_TO,       // destinatario final (p. ej., conecta@mcydj.mx)
