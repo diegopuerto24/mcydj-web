@@ -80,6 +80,15 @@ export async function POST(req) {
       return NextResponse.json({ error: "Tipo de contribuyente no válido." }, { status: 400 });
     }
 
+    // Env vars
+    const RESEND_API_KEY = process.env.RESEND_API_KEY;
+    const EMAIL_FROM = process.env.EMAIL_FROM || "noreply@mcydj.mx";
+    const EMAIL_TO = process.env.EMAIL_TO || "conecta@mcydj.mx";
+
+    if (!RESEND_API_KEY) {
+      return NextResponse.json({ error: "Falta RESEND_API_KEY" }, { status: 500 });
+    }
+
     // Folio (ID)
     const folio = makeFolio();
 
@@ -96,18 +105,10 @@ export async function POST(req) {
       pain
     });
 
-    // Resend
-    const RESEND_API_KEY = process.env.RESEND_API_KEY;
-    const EMAIL_FROM = process.env.EMAIL_FROM || "noreply@mcydj.mx";
-    const EMAIL_TO = process.env.EMAIL_TO || "conecta@mcydj.mx";
-
-    if (!RESEND_API_KEY) {
-      return NextResponse.json({ error: "Falta RESEND_API_KEY" }, { status: 500 });
-    }
-
     const serviceMain = servicesArr[0] || "Sin servicio";
 
-    const html = `
+    // Email interno (MC&DJ)
+    const internalHtml = `
       <div style="font-family:system-ui,Arial,sans-serif;line-height:1.45">
         <div style="padding:12px;border:1px solid #e2e8f0;border-radius:12px;background:#f8fafc">
           <div style="font-size:12px;color:#334155">Folio</div>
@@ -154,27 +155,107 @@ export async function POST(req) {
       </div>
     `;
 
-    const subject = `${folio} | ${priority} | RFP: ${serviceMain} — ${name}${company ? ` (${company})` : ""}`;
+    const internalSubject = `${folio} | ${priority} | RFP: ${serviceMain} — ${name}${company ? ` (${company})` : ""}`;
 
-    const r = await fetch("https://api.resend.com/emails", {
+    const internalRes = await fetch("https://api.resend.com/emails", {
       method: "POST",
-      headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
+      headers: {
+        Authorization: `Bearer ${RESEND_API_KEY}`,
+        "Content-Type": "application/json"
+      },
       body: JSON.stringify({
         from: EMAIL_FROM,
         to: EMAIL_TO,
-        subject,
-        html,
+        subject: internalSubject,
+        html: internalHtml,
         reply_to: email
       })
     });
 
-    if (!r.ok) {
-      const detail = await r.text();
-      return NextResponse.json({ error: `Resend API error: ${detail}` }, { status: 502 });
+    if (!internalRes.ok) {
+      const detail = await internalRes.text();
+      return NextResponse.json({ error: `Resend API error (interno): ${detail}` }, { status: 502 });
     }
 
-    // Respondemos también el folio para mostrarlo en UI
-    return NextResponse.json({ ok: true, id: folio, priority });
+    // Acuse al cliente (no bloqueante)
+    // Si no configuras nada en Vercel, estos defaults funcionan.
+    const ACK_FROM = process.env.ACK_FROM || `MC&DJ Consultores <${EMAIL_FROM}>`;
+    const ACK_BCC = process.env.ACK_BCC || ""; // opcional: conecta@mcydj.mx
+
+    const ackSubject = `Recibimos tu solicitud — Folio ${folio}`;
+
+    const ackHtml = `
+      <div style="font-family:system-ui,Arial,sans-serif;line-height:1.55">
+        <h2 style="margin:0 0 8px">Gracias por contactarnos</h2>
+        <p style="margin:0 0 12px">
+          Recibimos tu solicitud de propuesta (RFP). Nuestro equipo la revisará y te contactaremos a la brevedad.
+        </p>
+
+        <div style="padding:12px;border:1px solid #e2e8f0;border-radius:12px;background:#f8fafc;margin:14px 0">
+          <div style="font-size:12px;color:#334155">Folio de seguimiento</div>
+          <div style="font-size:18px;font-weight:800">${esc(folio)}</div>
+          <div style="margin-top:8px;font-size:14px;color:#334155">
+            Servicio principal: <b>${esc(serviceMain)}</b><br/>
+            Prioridad asignada: <b>${esc(priority)}</b>
+          </div>
+        </div>
+
+        <p style="margin:0 0 10px"><b>Para agilizar tu propuesta</b>, si lo tienes a la mano puedes preparar:</p>
+        <ul style="margin:0 0 14px;padding-left:18px">
+          <li>Constancia de Situación Fiscal (CSF)</li>
+          <li>Estados financieros recientes (si aplica)</li>
+          <li>Descripción breve de tu necesidad principal</li>
+        </ul>
+
+        <p style="margin:0 0 14px">
+          Si necesitas complementar información, responde a este correo o escríbenos a
+          <a href="mailto:conecta@mcydj.mx">conecta@mcydj.mx</a>.
+        </p>
+
+        <p style="margin:0;color:#64748b;font-size:12px">
+          MC&amp;DJ Consultores y Evaluadores Profesionales — mcydj.mx
+        </p>
+      </div>
+    `;
+
+    let ackOk = false;
+    let ackError = "";
+
+    try {
+      const payload = {
+        from: ACK_FROM,
+        to: [email],
+        subject: ackSubject,
+        html: ackHtml,
+        reply_to: "conecta@mcydj.mx"
+      };
+      if (ACK_BCC) payload.bcc = [ACK_BCC];
+
+      const ackRes = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${RESEND_API_KEY}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!ackRes.ok) {
+        ackError = await ackRes.text();
+      } else {
+        ackOk = true;
+      }
+    } catch (e) {
+      ackError = e?.message || "Fallo acuse";
+    }
+
+    return NextResponse.json({
+      ok: true,
+      id: folio,
+      priority,
+      ack: ackOk,
+      ...(ackOk ? {} : { ackError })
+    });
   } catch (e) {
     return NextResponse.json({ error: e?.message || "Error" }, { status: 500 });
   }
@@ -204,9 +285,9 @@ function calcPriority({ servicesArr, timing, revenue, taxPayerType, pain }) {
     "Finanzas corporativas (WACC, CAPM, valuación)",
     "Evaluación de proyectos de inversión"
   ];
-  if (servicesArr.some(s => hiValueServices.includes(s))) score += 3;
+  if (servicesArr.some((s) => hiValueServices.includes(s))) score += 3;
 
-  // Capacitación suele ser mediano (ajustable)
+  // Capacitación (ajustable)
   if (servicesArr.includes("Capacitación")) score += 1;
 
   // Urgencia por texto
@@ -222,7 +303,7 @@ function calcPriority({ servicesArr, timing, revenue, taxPayerType, pain }) {
   // Persona Moral suele implicar mayor estructura/volumen (heurística)
   if (taxPayerType === "PM") score += 1;
 
-  // Si el “dolor” es amplio/estratégico, sumamos (heurística por longitud)
+  // Dolor largo (heurística)
   if ((pain || "").length >= 450) score += 1;
 
   if (score >= 6) return "ALTA";
@@ -233,7 +314,9 @@ function calcPriority({ servicesArr, timing, revenue, taxPayerType, pain }) {
 function esc(s = "") {
   return String(s)
     .replace(/&/g, "&amp;").replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;").replace(/"/g, "&quot;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
 }
+
 
