@@ -1,5 +1,5 @@
 export const metadata = {
-  title: "Servicios | MC&DJ",
+  title: "Servicios ok| MC&DJ",
   description:
     "Servicios contables, fiscales, financieros y de evaluación de proyectos. Integramos inteligencia artificial como apoyo al análisis y al criterio profesional."
 };
