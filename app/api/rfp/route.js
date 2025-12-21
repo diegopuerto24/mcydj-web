@@ -318,5 +318,3 @@ function esc(s = "") {
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
 }
-
-
