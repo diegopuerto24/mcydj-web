@@ -6,6 +6,27 @@ import { useMemo, useState } from "react";
 const STEPS = ["Contacto", "Servicios", "Negocio", "Adjuntos"];
 
 export default function RFP() {
+  const REGIMENES_SAT = [
+  { code: "601", label: "General de Ley Personas Morales" },
+  { code: "603", label: "Personas Morales con Fines no Lucrativos" },
+  { code: "605", label: "Sueldos y Salarios e Ingresos Asimilados a Salarios" },
+  { code: "606", label: "Arrendamiento" },
+  { code: "607", label: "Régimen de Enajenación o Adquisición de Bienes" },
+  { code: "608", label: "Demás ingresos" },
+  { code: "610", label: "Residentes en el Extranjero sin Establecimiento Permanente en México" },
+  { code: "611", label: "Ingresos por Dividendos (socios y accionistas)" },
+  { code: "612", label: "Personas Físicas con Actividades Empresariales y Profesionales" },
+  { code: "614", label: "Ingresos por intereses" },
+  { code: "615", label: "Régimen de los ingresos por obtención de premios" },
+  { code: "616", label: "Sin obligaciones fiscales" },
+  { code: "620", label: "Sociedades Cooperativas de Producción que optan por diferir sus ingresos" },
+  { code: "621", label: "Incorporación Fiscal" },
+  { code: "622", label: "Actividades Agrícolas, Ganaderas, Silvícolas y Pesqueras" },
+  { code: "623", label: "Opcional para Grupos de Sociedades" },
+  { code: "624", label: "Coordinados" },
+  { code: "625", label: "Actividades Empresariales con ingresos a través de Plataformas Tecnológicas" },
+  { code: "626", label: "Régimen Simplificado de Confianza" }
+];
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [ok, setOk] = useState("");
@@ -28,7 +49,7 @@ export default function RFP() {
 
   const canNext = useMemo(() => {
     if (step === 0) return data.name.trim() && data.email.trim();
-    if (step === 2) return data.pain.trim();
+    if (step === 2) return data.pain.trim() && data.taxRegime;
     return true;
   }, [step, data]);
 
@@ -140,10 +161,11 @@ export default function RFP() {
               <label style={{fontSize:12}}>Servicios requeridos</label>
               <div style={{display:"grid", gap:6}}>
                 {[
-                  "Contabilidad",
-                  "Fiscal/Impuestos",
+                  "Contabilidad/Impuestos",
+                  "Consultoría Organizacional",
                   "Finanzas corporativas (WACC, CAPM, valuación)",
-                  "Evaluación de proyectos de inversión"
+                  "Evaluación de proyectos de inversión",
+                  "Capacitación"
                 ].map(s => (
                   <label key={s} style={{display:"flex", gap:8, alignItems:"center"}}>
                     <input
@@ -176,7 +198,19 @@ export default function RFP() {
               </div>
               <div>
                 <label style={{fontSize:12}}>Régimen fiscal</label>
-                <input className="input" value={data.taxRegime} onChange={(e)=>setField("taxRegime", e.target.value)} />
+                <select
+  className="select"
+  value={data.taxRegime}
+  onChange={(e) => setField("taxRegime", e.target.value)}
+  required
+>
+  <option value="">Selecciona tu régimen fiscal (SAT)</option>
+  {REGIMENES_SAT.map(r => (
+    <option key={r.code} value={r.code}>
+      {r.code} — {r.label}
+    </option>
+  ))}
+</select>
               </div>
               <div>
                 <label style={{fontSize:12}}>Plazo deseado / Urgencia</label>
