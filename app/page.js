@@ -32,72 +32,20 @@ const SERVICES = [
   }
 ];
 
-const INSIGHTS = [
-  {
-    title: "Cómo evitar contingencias fiscales comunes en PyMEs",
-    desc: "Un enfoque práctico para reducir riesgos y ganar control.",
-    href: "/recursos"
-  },
-  {
-    title: "Decisiones de inversión: qué revisar antes de comprometer capital",
-    desc: "Supuestos, flujo, riesgo y señales de alerta.",
-    href: "/recursos"
-  },
-  {
-    title: "IA en administración y finanzas: dónde sí aporta valor (y dónde no)",
-    desc: "Adopción responsable: criterio primero, tecnología después.",
-    href: "/recursos"
-  }
-];
-
-const TOOLS = [
-  {
-    title: "Calculadora de Aguinaldo",
-    desc: "Estimación rápida con supuestos claros y trazabilidad.",
-    status: "Próximamente",
-    href: "/recursos"
-  },
-  {
-    title: "Calculadora de Vacaciones",
-    desc: "Cálculo referencial para planificación y control interno.",
-    status: "Próximamente",
-    href: "/recursos"
-  },
-  {
-    title: "Indicadores clave (UMA, INPC, Salario mínimo)",
-    desc: "Panel con fecha de actualización y fuentes oficiales.",
-    status: "Próximamente",
-    href: "/recursos"
-  }
-];
-
-function Card({ title, desc, href, tag }) {
+function Card({ title, desc, href }) {
   return (
     <article className="card" style={{ display: "grid", gap: 10 }}>
       <div style={{ display: "grid", gap: 6 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-          <h3 style={{ margin: 0, fontSize: 16, fontWeight: 900 }}>{title}</h3>
-          {tag ? (
-            <span
-              style={{
-                fontSize: 11,
-                fontWeight: 900,
-                padding: "4px 10px",
-                borderRadius: 999,
-                border: "var(--border)",
-                background: "rgba(255,255,255,.45)"
-              }}
-            >
-              {tag}
-            </span>
-          ) : null}
-        </div>
+        <h3 style={{ margin: 0, fontSize: 16, fontWeight: 900 }}>{title}</h3>
         <p style={{ margin: 0, opacity: 0.85 }}>{desc}</p>
       </div>
 
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 2 }}>
         <a className="btn btn-primary" href={href}>
-          Ver más
+          Solicitar propuesta
+        </a>
+        <a className="btn btn-secondary" href="/servicios">
+          Ver detalle
         </a>
       </div>
     </article>
@@ -211,54 +159,6 @@ export default function HomePage() {
           <a className="btn btn-secondary" href="/servicios">
             Ver detalle de servicios
           </a>
-        </div>
-      </section>
-
-      {/* INSIGHTS */}
-      <section style={{ display: "grid", gap: 12 }}>
-        <SectionHeader
-          kicker="Insights"
-          title="Artículos y criterios prácticos"
-          desc="Contenido breve y útil para empresarios y directivos. Sin ruido; con sustento."
-        />
-
-        <div
-          style={{
-            display: "grid",
-            gap: 14,
-            gridTemplateColumns: "repeat(1, minmax(0, 1fr))"
-          }}
-        >
-          {INSIGHTS.map((x) => (
-            <Card key={x.title} title={x.title} desc={x.desc} href={x.href} tag="Actualizable" />
-          ))}
-        </div>
-
-        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-          <a className="btn btn-secondary" href="/recursos">
-            Ver recursos
-          </a>
-        </div>
-      </section>
-
-      {/* HERRAMIENTAS */}
-      <section style={{ display: "grid", gap: 12 }}>
-        <SectionHeader
-          kicker="Herramientas"
-          title="Utilidades para decisiones rápidas"
-          desc="Calculadoras e indicadores clave con supuestos claros y fecha de actualización."
-        />
-
-        <div
-          style={{
-            display: "grid",
-            gap: 14,
-            gridTemplateColumns: "repeat(1, minmax(0, 1fr))"
-          }}
-        >
-          {TOOLS.map((t) => (
-            <Card key={t.title} title={t.title} desc={t.desc} href={t.href} tag={t.status} />
-          ))}
         </div>
       </section>
 
