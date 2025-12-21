@@ -1,7 +1,8 @@
 "use client";
 export const dynamic = "force-dynamic";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+;
 
 const STEPS = ["Contacto", "Servicios", "Negocio", "Adjuntos"];
 
