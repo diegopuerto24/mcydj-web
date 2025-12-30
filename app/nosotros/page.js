@@ -1,3 +1,4 @@
+import Reveal from "../../components/Reveal";
 export const metadata = {
   title: "Nosotros x | MC&DJ",
   description:
@@ -32,7 +33,7 @@ function Block({ title, children }) {
 
 export default function NosotrosPage() {
   return (
-    <section className="container" style={{ display: "grid", gap: 16 }}>
+    <Reveal as="header" className="card" delay={0}> style={{ display: "grid", gap: 16 }}>
       <header className="card" style={{ display: "grid", gap: 10 }}>
         <h1 className="h1" style={{ margin: 0 }}>
           Nosotros
@@ -62,7 +63,7 @@ export default function NosotrosPage() {
         </div>
       </header>
 
-      <Block title="Qué hacemos">
+      <Reveal delay={60}><Block title="Qué hacemos">
         <p style={{ margin: 0 }}>
           En MC&amp;DJ acompañamos a personas físicas y morales en la gestión, análisis y optimización de su información
           financiera, fiscal y administrativa, con un enfoque técnico, práctico y orientado a decisiones.
@@ -73,7 +74,7 @@ export default function NosotrosPage() {
         </p>
       </Block>
 
-      <Block title="Cómo trabajamos">
+      <Reveal delay={90}><Block title="Cómo trabajamos">
         <p style={{ margin: 0 }}>
           Operamos bajo metodologías estructuradas que combinan criterio profesional, análisis riguroso y herramientas
           tecnológicas modernas —incluida la inteligencia artificial— para incrementar la precisión, eficiencia y
@@ -89,7 +90,7 @@ export default function NosotrosPage() {
         </p>
       </Block>
 
-      <Block title="Cómo generamos valor">
+      <Reveal delay={120}><Block title="Cómo generamos valor">
         <p style={{ margin: 0 }}>Generamos valor cuando ayudamos a nuestros clientes a:</p>
         <ul style={{ margin: 0, paddingLeft: 18, display: "grid", gap: 6 }}>
           <li>Reducir incertidumbre en la toma de decisiones.</li>
@@ -106,7 +107,7 @@ export default function NosotrosPage() {
         </p>
       </Block>
 
-      <Block title="Compromiso institucional">
+      <Reveal delay={150}><Block title="Compromiso institucional">
         <p style={{ margin: 0 }}>
           En MC&amp;DJ creemos que una buena decisión comienza con información confiable, análisis sólido y criterio
           profesional.
@@ -117,7 +118,7 @@ export default function NosotrosPage() {
         </p>
       </Block>
 
-      <footer className="card" style={{ display: "grid", gap: 10 }}>
+      <Reveal as="footer" className="card" delay={180}> style={{ display: "grid", gap: 10 }}>
         <h2 style={{ margin: 0, fontSize: 18, fontWeight: 900 }}>¿Hablamos?</h2>
         <p style={{ margin: 0, opacity: 0.85 }}>
           Si ya tienes claridad sobre lo que necesitas, envíanos una solicitud. Si prefieres, podemos orientarte primero.
