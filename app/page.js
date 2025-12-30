@@ -3,7 +3,29 @@ export const metadata = {
   description:
     "Firma de asesoría contable, fiscal, financiera, consultoría organizacional y evaluación de proyectos. Información confiable para decisiones con sustento."
 };
-
+<div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+  <span style={{
+    fontSize: 12, fontWeight: 900, padding: "6px 10px",
+    borderRadius: 999, border: "var(--border)",
+    background: "rgba(255,255,255,.45)"
+  }}>
+    Personas físicas y morales
+  </span>
+  <span style={{
+    fontSize: 12, fontWeight: 900, padding: "6px 10px",
+    borderRadius: 999, border: "var(--border)",
+    background: "rgba(255,255,255,.45)"
+  }}>
+    Enfoque ejecutivo
+  </span>
+  <span style={{
+    fontSize: 12, fontWeight: 900, padding: "6px 10px",
+    borderRadius: 999, border: "var(--border)",
+    background: "rgba(255,255,255,.45)"
+  }}>
+    IA como apoyo al análisis
+  </span>
+</div>
 const SERVICES = [
   {
     title: "Contabilidad e Impuestos",
