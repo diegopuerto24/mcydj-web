@@ -2,14 +2,11 @@
 export const dynamic = "force-dynamic";
 
 import { useEffect, useMemo, useState } from "react";
-;
-;
 
 const STEPS = ["Contacto", "Servicios", "Negocio", "Adjuntos"];
 
 /**
- * Catálogo SAT (c_RegimenFiscal).
- * Aquí lo mantenemos en frontend por ahora; después lo movemos a /lib/sat.js para compartirlo con el backend.
+ * Catálogo SAT (c_RegimenFiscal)
  */
 const REGIMENES_SAT = [
   { code: "601", label: "General de Ley Personas Morales" },
@@ -33,26 +30,26 @@ const REGIMENES_SAT = [
   { code: "626", label: "Régimen Simplificado de Confianza" }
 ];
 
-// Filtro simple por tipo de contribuyente (para UX).
-// Nota: no es una regla fiscal perfecta para todos los casos; es una guía práctica para el usuario.
+// Filtro simple por tipo de contribuyente (UX)
 const REGIMENES_POR_TIPO = {
   PM: new Set(["601", "603", "620", "622", "623", "624"]), // Personas Morales
   PF: new Set(["605", "606", "607", "608", "610", "611", "612", "614", "615", "616", "621", "625", "626"]) // Personas Físicas
 };
 
 export default function RFP() {
-   const SERVICE_OPTIONS = [
+  const SERVICE_OPTIONS = [
     "Contabilidad/Impuestos",
     "Consultoría Organizacional",
     "Finanzas corporativas (WACC, CAPM, valuación)",
     "Evaluación de proyectos de inversión",
     "Capacitación"
   ];
+
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [ok, setOk] = useState("");
   const [err, setErr] = useState("");
-  const [folio, setFolio] = useState(""); // lo llenaremos cuando backend devuelva { id }
+  const [folio, setFolio] = useState("");
 
   const [data, setData] = useState({
     name: "",
@@ -74,6 +71,8 @@ export default function RFP() {
     attachmentUrl: "",
     notes: ""
   });
+
+  // Preselección automática de servicio via /rfp?service=...
   useEffect(() => {
     try {
       const params = new URLSearchParams(window.location.search);
@@ -103,12 +102,10 @@ export default function RFP() {
         { match: ["capacitacion"], value: "Capacitación" }
       ];
 
-      // 1) Si coincide exacto con una opción, úsalo
       let selected = "";
       const exact = SERVICE_OPTIONS.find((opt) => normalize(opt) === n);
       if (exact) selected = exact;
 
-      // 2) Si no coincide exacto, intenta por palabras clave
       if (!selected) {
         for (const a of aliasMap) {
           if (a.match.every((w) => n.includes(w))) {
@@ -126,18 +123,19 @@ export default function RFP() {
         return { ...d, services: [...current, selected] };
       });
     } catch {
-      // no hacemos nada si algo falla; nunca rompemos el formulario por esto
+      // no-op
     }
   }, []);
+
   const filteredRegimes = useMemo(() => {
     if (!data.taxPayerType) return REGIMENES_SAT;
     const allowed = REGIMENES_POR_TIPO[data.taxPayerType];
-    return REGIMENES_SAT.filter(r => allowed?.has(r.code));
+    return REGIMENES_SAT.filter((r) => allowed?.has(r.code));
   }, [data.taxPayerType]);
 
   const canNext = useMemo(() => {
     if (step === 0) return data.name.trim() && data.email.trim();
-    if (step === 1) return data.services.length >= 1; // Servicios obligatorio
+    if (step === 1) return Array.isArray(data.services) && data.services.length >= 1;
     if (step === 2) return data.pain.trim() && data.taxPayerType && data.taxRegime;
     return true;
   }, [step, data]);
@@ -159,16 +157,17 @@ export default function RFP() {
     setData((d) => ({
       ...d,
       taxPayerType: value,
-      taxRegime: "" // al cambiar PF/PM, reseteamos régimen para evitar inconsistencias
+      taxRegime: ""
     }));
   }
 
   function toggleService(service) {
     setData((d) => {
-      const exists = d.services.includes(service);
+      const current = Array.isArray(d.services) ? d.services : [];
+      const exists = current.includes(service);
       return {
         ...d,
-        services: exists ? d.services.filter((x) => x !== service) : [...d.services, service]
+        services: exists ? current.filter((x) => x !== service) : [...current, service]
       };
     });
   }
@@ -186,14 +185,19 @@ export default function RFP() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data)
       });
+
       const j = await res.json();
       if (!res.ok) throw new Error(j.error || "No se pudo enviar. Intenta de nuevo.");
 
-      // Si luego backend manda {id}, lo mostramos.
       if (j?.id) setFolio(String(j.id));
-if (j?.ack === false) {
-  setErr("Tu solicitud se registró, pero el acuse por correo no pudo enviarse. Si no te llega en unos minutos, revisa Spam o escríbenos a conecta@mcydj.mx.");
-}
+
+      // Si el backend reporta que el acuse falló, lo mostramos como aviso (no bloquea).
+      if (j?.ack === false) {
+        setErr(
+          "Tu solicitud se registró, pero el acuse por correo no pudo enviarse. Si no te llega en unos minutos, revisa Spam o escríbenos a conecta@mcydj.mx."
+        );
+      }
+
       setOk("Listo. Recibimos tu solicitud y te contactaremos a la brevedad por correo o WhatsApp.");
 
       setData({
@@ -232,7 +236,16 @@ if (j?.ack === false) {
 
       <div style={{ height: 16 }} />
 
-      <ol style={{ display: "flex", gap: 8, listStyle: "none", padding: 0, margin: "0 0 16px", flexWrap: "wrap" }}>
+      <ol
+        style={{
+          display: "flex",
+          gap: 8,
+          listStyle: "none",
+          padding: 0,
+          margin: "0 0 16px",
+          flexWrap: "wrap"
+        }}
+      >
         {STEPS.map((t, i) => (
           <li
             key={t}
@@ -265,7 +278,13 @@ if (j?.ack === false) {
               </div>
               <div>
                 <label style={{ fontSize: 12 }}>Email *</label>
-                <input className="input" type="email" value={data.email} onChange={(e) => setField("email", e.target.value)} required />
+                <input
+                  className="input"
+                  type="email"
+                  value={data.email}
+                  onChange={(e) => setField("email", e.target.value)}
+                  required
+                />
               </div>
               <div>
                 <label style={{ fontSize: 12 }}>Tel/WhatsApp</label>
@@ -274,16 +293,13 @@ if (j?.ack === false) {
             </div>
           )}
 
-                    {step === 1 && (
+          {step === 1 && (
             <div style={{ display: "grid", gap: 8 }}>
-              <label style={{ fontSize: 12 }}>Servicios requeridos</label>
+              <label style={{ fontSize: 12 }}>Servicios requeridos *</label>
 
               <div style={{ display: "grid", gap: 6 }}>
                 {SERVICE_OPTIONS.map((s) => (
-                  <label
-                    key={s}
-                    style={{ display: "flex", gap: 8, alignItems: "center" }}
-                  >
+                  <label key={s} style={{ display: "flex", gap: 8, alignItems: "center" }}>
                     <input
                       type="checkbox"
                       checked={Array.isArray(data.services) && data.services.includes(s)}
@@ -297,8 +313,6 @@ if (j?.ack === false) {
               <div style={{ opacity: 0.8, fontSize: 12, marginTop: 6 }}>
                 Selecciona uno o más servicios. Si no estás seguro, elige el más cercano a tu necesidad.
               </div>
-            </div>
-          )}
             </div>
           )}
 
@@ -327,7 +341,12 @@ if (j?.ack === false) {
 
               <div>
                 <label style={{ fontSize: 12 }}>Tipo de contribuyente *</label>
-                <select className="select" value={data.taxPayerType} onChange={(e) => setTaxPayerType(e.target.value)} required>
+                <select
+                  className="select"
+                  value={data.taxPayerType}
+                  onChange={(e) => setTaxPayerType(e.target.value)}
+                  required
+                >
                   <option value="">Selecciona una opción</option>
                   <option value="PF">Persona Física</option>
                   <option value="PM">Persona Moral</option>
@@ -367,7 +386,13 @@ if (j?.ack === false) {
 
               <div>
                 <label style={{ fontSize: 12 }}>Principal necesidad o dolor *</label>
-                <textarea className="textarea" rows={5} value={data.pain} onChange={(e) => setField("pain", e.target.value)} required />
+                <textarea
+                  className="textarea"
+                  rows={5}
+                  value={data.pain}
+                  onChange={(e) => setField("pain", e.target.value)}
+                  required
+                />
               </div>
             </div>
           )}
@@ -416,13 +441,17 @@ if (j?.ack === false) {
           {ok && (
             <div style={{ color: "#16a34a" }}>
               {ok}
-              {folio ? <div style={{ marginTop: 6 }}>Folio: <strong>{folio}</strong></div> : null}
+              {folio ? (
+                <div style={{ marginTop: 6 }}>
+                  Folio: <strong>{folio}</strong>
+                </div>
+              ) : null}
             </div>
           )}
+
           {err && <div style={{ color: "#dc2626" }}>{err}</div>}
         </form>
       </div>
     </section>
   );
 }
-
