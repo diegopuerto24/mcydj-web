@@ -141,20 +141,28 @@ export default function HomePage() {
           desc="No entregamos solo cumplimiento: entregamos control, claridad y soporte para decidir."
         />
 
-        <ul style={{ margin: 0, paddingLeft: 18, display: "grid", gap: 8 }}>
-          <li>
-            <b>Criterio profesional + metodología:</b> procesos estructurados y entregables documentados.
-          </li>
-          <li>
-            <b>Información que sí se usa:</b> reportes ejecutivos, modelos y análisis orientados a decisiones.
-          </li>
-          <li>
-            <b>Prevención de riesgos:</b> enfoque en control, consistencia y reducción de contingencias.
-          </li>
-          <li>
-            <b>IA con responsabilidad:</b> tecnología como apoyo; el criterio experto define el resultado.
-          </li>
-        </ul>
+        <div style={{
+  display: "grid",
+  gap: 10,
+  gridTemplateColumns: "repeat(1, minmax(0, 1fr))"
+}}>
+  {[
+    { t: "Criterio profesional + metodología", d: "Procesos estructurados y entregables documentados." },
+    { t: "Información que sí se usa", d: "Reportes ejecutivos, modelos y análisis orientados a decisiones." },
+    { t: "Prevención de riesgos", d: "Control, consistencia y reducción de contingencias." },
+    { t: "IA con responsabilidad", d: "Tecnología como apoyo; el criterio experto define el resultado." }
+  ].map((x) => (
+    <div key={x.t} style={{
+      border: "var(--border)",
+      borderRadius: 14,
+      padding: 12,
+      background: "rgba(255,255,255,.35)"
+    }}>
+      <div style={{ fontWeight: 900 }}>{x.t}</div>
+      <div style={{ opacity: 0.85, marginTop: 4 }}>{x.d}</div>
+    </div>
+  ))}
+</div>
       </section>
 
       {/* SERVICIOS */}
@@ -185,7 +193,7 @@ export default function HomePage() {
       </section>
 
       {/* CIERRE CTA */}
-      <footer className="card" style={{ display: "grid", gap: 10 }}>
+      <footer className="card" style={{ display: "grid", gap: 10, alignContent: "start" }}>
         <h2 style={{ margin: 0, fontSize: 18, fontWeight: 900 }}>
           Si ya tienes claridad, envíanos tu solicitud. Si no, te orientamos.
         </h2>
