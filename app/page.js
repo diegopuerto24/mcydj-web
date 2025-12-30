@@ -1,3 +1,4 @@
+import Reveal from "../components/Reveal";
 export const metadata = {
   title: "MC&DJ | Contabilidad, Fiscal, Finanzas y Proyectos",
   description:
@@ -92,7 +93,7 @@ export default function HomePage() {
   return (
     <section className="container" style={{ display: "grid", gap: 16 }}>
       {/* HERO */}
-      <header className="card" style={{ display: "grid", gap: 12 }}>
+      <Reveal as="header" className="card" delay={0}> style={{ display: "grid", gap: 12 }}>
         <h1 className="h1" style={{ margin: 0 }}>
           Contabilidad, fiscal y finanzas para decisiones con sustento
         </h1>
@@ -134,7 +135,7 @@ export default function HomePage() {
       </header>
 
       {/* DIFERENCIADORES */}
-      <section className="card" style={{ display: "grid", gap: 12 }}>
+      <Reveal as="section" className="card" delay={60}> style={{ display: "grid", gap: 12 }}>
         <SectionHeader
           kicker="Nuestra propuesta"
           title="Una firma con enfoque ejecutivo"
@@ -166,7 +167,7 @@ export default function HomePage() {
       </section>
 
       {/* SERVICIOS */}
-      <section style={{ display: "grid", gap: 12 }}>
+      <Reveal as="section" delay={120}> style={{ display: "grid", gap: 12 }}>
         <SectionHeader
           kicker="Servicios"
           title="Cómo podemos ayudarte"
@@ -193,7 +194,7 @@ export default function HomePage() {
       </section>
 
       {/* CIERRE CTA */}
-      <footer className="card" style={{ display: "grid", gap: 10, alignContent: "start" }}>
+      <Reveal as="footer" className="card" delay={160}> style={{ display: "grid", gap: 10, alignContent: "start" }}>
         <h2 style={{ margin: 0, fontSize: 18, fontWeight: 900 }}>
           Si ya tienes claridad, envíanos tu solicitud. Si no, te orientamos.
         </h2>
