@@ -1,3 +1,4 @@
+import Reveal from "../../components/Reveal";
 export const metadata = {
   title: "Servicios ok| MC&DJ",
   description:
@@ -124,7 +125,7 @@ const SERVICES = [
 
 function ServiceCard({ s }) {
   return (
-    <article className="card" style={{ display: "grid", gap: 12 }}>
+    <article Reveal as="header" className="card" delay={0}> style={{ display: "grid", gap: 12 }}>
       <header style={{ display: "grid", gap: 6 }}>
         <h2 style={{ margin: 0, fontSize: 20, fontWeight: 900 }}>{s.title}</h2>
         <p style={{ margin: 0, opacity: 0.85 }}>{s.subtitle}</p>
@@ -181,7 +182,7 @@ function Section({ title, children }) {
 
 export default function ServiciosPage() {
   return (
-    <section className="container" style={{ display: "grid", gap: 18 }}>
+    <Reveal as="section" className="card" delay={60}> style={{ display: "grid", gap: 18 }}>
       <header className="card" style={{ display: "grid", gap: 10 }}>
         <h1 className="h1" style={{ margin: 0 }}>
           Servicios
@@ -223,7 +224,7 @@ export default function ServiciosPage() {
         ))}
       </div>
 
-      <footer className="card" style={{ display: "grid", gap: 10 }}>
+      <Reveal as="footer" className="card" delay={90}> style={{ display: "grid", gap: 10 }}>
         <h2 style={{ margin: 0, fontSize: 18, fontWeight: 900 }}>¿Listo para una propuesta?</h2>
         <p style={{ margin: 0, opacity: 0.85 }}>
           Si ya tienes claridad sobre lo que necesitas, envíanos tu solicitud. Si prefieres, podemos orientarte primero.
