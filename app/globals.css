@@ -217,4 +217,69 @@ a:hover{ text-decoration:underline; text-underline-offset: 4px; }
 @media (max-width: 900px){
   .navDesktop{ display:none; }
   .menuBtn{ display:inline-flex; }
+}/* === MC&DJ: Ajuste visual base (Fase 1) === */
+
+/* Contenedor: más aire y control de ancho */
+.container{
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 18px 14px;
 }
+
+/* Tipografía: lectura más clara (sin cambiar tu sistema) */
+.h1{
+  letter-spacing: -0.02em;
+  line-height: 1.12;
+}
+
+.p-muted{
+  line-height: 1.55;
+}
+
+/* Cards: consistencia y presencia institucional */
+.card{
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 1px 0 rgba(0,0,0,.06);
+}
+
+/* Separación vertical suave entre bloques */
+section.container > *{
+  scroll-margin-top: 90px;
+}
+
+/* Botones: mejor tacto, sin “look web genérica” */
+.btn{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-weight: 900;
+  text-decoration: none;
+  transition: transform .12s ease, opacity .12s ease, background .12s ease;
+  user-select: none;
+}
+
+.btn:hover{
+  transform: translateY(-1px);
+}
+
+.btn:active{
+  transform: translateY(0);
+  opacity: .95;
+}
+
+/* Inputs/Select/Textarea: alineación visual profesional */
+.input, .select, .textarea{
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+/* Responsive: en pantallas amplias, más aire */
+@media (min-width: 900px){
+  .container{ padding: 26px 18px; }
+  .card{ padding: 18px; }
+}
+
