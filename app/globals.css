@@ -282,4 +282,25 @@ section.container > *{
   .container{ padding: 26px 18px; }
   .card{ padding: 18px; }
 }
+/* === MC&DJ: Reveal (Fase 2) === */
+.reveal{
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 420ms ease, transform 420ms ease;
+  will-change: opacity, transform;
+}
+
+.reveal.is-visible{
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Accesibilidad: si el usuario reduce movimiento */
+@media (prefers-reduced-motion: reduce){
+  .reveal{
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+}
 
