@@ -274,25 +274,31 @@ if (j?.ack === false) {
             </div>
           )}
 
-          {step === 1 && (
+                    {step === 1 && (
             <div style={{ display: "grid", gap: 8 }}>
-              <label style={{ fontSize: 12 }}>Servicios requeridos *</label>
+              <label style={{ fontSize: 12 }}>Servicios requeridos</label>
 
               <div style={{ display: "grid", gap: 6 }}>
-                {[
-                  SERVICE_OPTIONS.map(s => (].map(s=>(
-                  <label key={s} style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                    <input type="checkbox" checked={data.services.includes(s)} onChange={() => toggleService(s)} />
+                {SERVICE_OPTIONS.map((s) => (
+                  <label
+                    key={s}
+                    style={{ display: "flex", gap: 8, alignItems: "center" }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={Array.isArray(data.services) && data.services.includes(s)}
+                      onChange={() => toggleService(s)}
+                    />
                     <span>{s}</span>
                   </label>
                 ))}
               </div>
 
-              {data.services.length === 0 && (
-                <div style={{ fontSize: 12, color: "rgba(22,21,14,.72)" }}>
-                  Selecciona al menos 1 servicio para continuar.
-                </div>
-              )}
+              <div style={{ opacity: 0.8, fontSize: 12, marginTop: 6 }}>
+                Selecciona uno o más servicios. Si no estás seguro, elige el más cercano a tu necesidad.
+              </div>
+            </div>
+          )}
             </div>
           )}
 
