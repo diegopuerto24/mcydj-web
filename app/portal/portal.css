@@ -1,0 +1,338 @@
+.portalShell{
+  min-height:100vh;
+  display:grid;
+  grid-template-columns:280px 1fr;
+  background:linear-gradient(135deg, var(--mcydj-yellow), #fffdf0 55%, rgba(160,199,254,.55));
+  color:var(--mcydj-ink);
+}
+
+.portalSidebar{
+  position:sticky;
+  top:0;
+  height:100vh;
+  padding:22px 16px;
+  border-right:var(--border);
+  background:rgba(255,255,255,.58);
+  backdrop-filter:blur(12px);
+  display:flex;
+  flex-direction:column;
+  gap:22px;
+}
+
+.portalBrand{
+  display:grid;
+  gap:2px;
+  padding:14px;
+  border:var(--border);
+  border-radius:18px;
+  background:var(--mcydj-ink);
+  color:var(--mcydj-yellow);
+  text-decoration:none;
+}
+
+.portalBrand strong{
+  font-size:22px;
+  letter-spacing:-.02em;
+}
+
+.portalBrand span{
+  font-size:13px;
+  opacity:.86;
+}
+
+.portalNav{
+  display:grid;
+  gap:8px;
+}
+
+.portalNav button{
+  width:100%;
+  border:0;
+  border-radius:14px;
+  padding:12px 14px;
+  background:transparent;
+  color:var(--mcydj-ink);
+  text-align:left;
+  font-weight:900;
+  cursor:pointer;
+}
+
+.portalNav button:hover,
+.portalNav button.active{
+  background:#fff;
+  box-shadow:0 1px 0 rgba(0,0,0,.08);
+}
+
+.portalMain{
+  padding:24px;
+  display:grid;
+  gap:18px;
+  align-content:start;
+}
+
+.portalTopbar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  padding:18px;
+  border:var(--border);
+  border-radius:22px;
+  background:rgba(255,255,255,.72);
+}
+
+.portalTopbar p{
+  margin:0;
+  font-size:12px;
+  font-weight:900;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+  opacity:.68;
+}
+
+.portalTopbar h1{
+  margin:2px 0 0;
+  font-size:clamp(26px, 4vw, 42px);
+  line-height:1.05;
+  letter-spacing:-.03em;
+}
+
+.roleBox{
+  display:grid;
+  gap:6px;
+  min-width:220px;
+}
+
+.roleBox span,
+.field span{
+  font-size:12px;
+  font-weight:900;
+  opacity:.72;
+}
+
+.roleBox select,
+.field input,
+.field textarea{
+  width:100%;
+  border:var(--border);
+  border-radius:12px;
+  padding:10px 12px;
+  background:#fff;
+  color:var(--mcydj-ink);
+  font:inherit;
+}
+
+.notice{
+  border:1px solid rgba(246,89,4,.28);
+  background:rgba(246,89,4,.10);
+  border-radius:16px;
+  padding:12px 14px;
+  font-weight:800;
+}
+
+.portalGrid{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:14px;
+}
+
+.portalCard{
+  background:rgba(255,255,255,.88);
+  border:var(--border);
+  border-radius:20px;
+  padding:18px;
+  box-shadow:0 1px 0 rgba(0,0,0,.06);
+}
+
+.statCard{
+  display:grid;
+  gap:6px;
+}
+
+.statCard span{
+  font-size:12px;
+  font-weight:900;
+  text-transform:uppercase;
+  opacity:.65;
+}
+
+.statCard strong{
+  font-size:34px;
+  line-height:1;
+}
+
+.statCard small{
+  opacity:.72;
+}
+
+.agendaLayout{
+  display:grid;
+  grid-template-columns:minmax(280px,380px) 1fr;
+  gap:16px;
+  align-items:start;
+}
+
+.reservationForm{
+  display:grid;
+  gap:13px;
+}
+
+.sectionTitle{
+  display:grid;
+  gap:4px;
+  margin-bottom:2px;
+}
+
+.sectionTitle h2{
+  margin:0;
+  font-size:20px;
+  letter-spacing:-.01em;
+}
+
+.sectionTitle p{
+  margin:0;
+  opacity:.72;
+}
+
+.field{
+  display:grid;
+  gap:6px;
+}
+
+.timeGrid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+
+.formActions{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.tableCard,
+.logCard{
+  display:grid;
+  gap:14px;
+}
+
+.logCard{
+  grid-column:1 / -1;
+}
+
+.reservationList,
+.logList{
+  display:grid;
+  gap:10px;
+}
+
+.reservationItem{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  padding:14px;
+  border:var(--border);
+  border-radius:16px;
+  background:#fff;
+}
+
+.reservationItem div:first-child,
+.logList div{
+  display:grid;
+  gap:3px;
+}
+
+.reservationItem span,
+.reservationItem small,
+.logList span{
+  opacity:.74;
+}
+
+.reservationActions{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+}
+
+.reservationActions button{
+  border:var(--border);
+  border-radius:999px;
+  padding:8px 10px;
+  background:rgba(255,249,125,.6);
+  font-weight:900;
+  cursor:pointer;
+}
+
+.reservationActions button:last-child{
+  background:rgba(246,89,4,.12);
+}
+
+.logList div{
+  padding:12px;
+  border:var(--border);
+  border-radius:14px;
+  background:#fff;
+}
+
+.emptyState{
+  min-height:260px;
+  display:grid;
+  align-content:center;
+  justify-items:start;
+  gap:8px;
+}
+
+.emptyState h2,
+.emptyState p{
+  margin:0;
+}
+
+@media (max-width:980px){
+  .portalShell{
+    grid-template-columns:1fr;
+  }
+
+  .portalSidebar{
+    position:relative;
+    height:auto;
+  }
+
+  .portalNav{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+
+  .portalTopbar{
+    align-items:flex-start;
+    flex-direction:column;
+  }
+
+  .roleBox{
+    width:100%;
+  }
+
+  .portalGrid,
+  .agendaLayout{
+    grid-template-columns:1fr;
+  }
+}
+
+@media (max-width:560px){
+  .portalMain{
+    padding:14px;
+  }
+
+  .portalNav{
+    grid-template-columns:1fr;
+  }
+
+  .reservationItem{
+    display:grid;
+  }
+
+  .reservationActions{
+    justify-content:flex-start;
+  }
+}
