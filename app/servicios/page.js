@@ -1,6 +1,7 @@
 import Reveal from "../../components/Reveal";
+
 export const metadata = {
-  title: "Servicios ok| MC&DJ",
+  title: "Servicios | MC&DJ",
   description:
     "Servicios contables, fiscales, financieros y de evaluación de proyectos. Integramos inteligencia artificial como apoyo al análisis y al criterio profesional."
 };
@@ -13,7 +14,7 @@ const SERVICES = [
     what: [
       "Administramos, supervisamos y optimizamos el cumplimiento contable y fiscal de personas físicas y morales.",
       "Integramos herramientas de análisis asistido por inteligencia artificial para detección de inconsistencias, validación y revisión documental, siempre bajo supervisión profesional.",
-      "Nuestro enfoque es que la contabilidad no solo “cumpla”, sino que sirva para decidir."
+      "Nuestro enfoque es que la contabilidad no solo cumpla, sino que sirva para decidir."
     ],
     when: [
       "Buscas certeza fiscal y reducción de contingencias.",
@@ -123,9 +124,20 @@ const SERVICES = [
   }
 ];
 
+function Section({ title, children }) {
+  return (
+    <section style={{ borderTop: "var(--border)", paddingTop: 10 }}>
+      <div style={{ fontSize: 12, fontWeight: 900, textTransform: "uppercase", letterSpacing: 0.6, opacity: 0.85 }}>
+        {title}
+      </div>
+      <div style={{ marginTop: 8 }}>{children}</div>
+    </section>
+  );
+}
+
 function ServiceCard({ s }) {
   return (
-    <article Reveal as="header" className="card" delay={0}> style={{ display: "grid", gap: 12 }}>
+    <Reveal as="article" className="card" delay={0} style={{ display: "grid", gap: 12 }}>
       <header style={{ display: "grid", gap: 6 }}>
         <h2 style={{ margin: 0, fontSize: 20, fontWeight: 900 }}>{s.title}</h2>
         <p style={{ margin: 0, opacity: 0.85 }}>{s.subtitle}</p>
@@ -165,24 +177,13 @@ function ServiceCard({ s }) {
           Hablar con un asesor
         </a>
       </div>
-    </article>
-  );
-}
-
-function Section({ title, children }) {
-  return (
-    <section style={{ borderTop: "var(--border)", paddingTop: 10 }}>
-      <div style={{ fontSize: 12, fontWeight: 900, textTransform: "uppercase", letterSpacing: 0.6, opacity: 0.85 }}>
-        {title}
-      </div>
-      <div style={{ marginTop: 8 }}>{children}</div>
-    </section>
+    </Reveal>
   );
 }
 
 export default function ServiciosPage() {
   return (
-    <Reveal as="section" className="card" delay={60}> style={{ display: "grid", gap: 18 }}>
+    <Reveal as="section" className="container" delay={60} style={{ display: "grid", gap: 18 }}>
       <header className="card" style={{ display: "grid", gap: 10 }}>
         <h1 className="h1" style={{ margin: 0 }}>
           Servicios
@@ -224,7 +225,7 @@ export default function ServiciosPage() {
         ))}
       </div>
 
-      <Reveal as="footer" className="card" delay={90}> style={{ display: "grid", gap: 10 }}>
+      <Reveal as="footer" className="card" delay={90} style={{ display: "grid", gap: 10 }}>
         <h2 style={{ margin: 0, fontSize: 18, fontWeight: 900 }}>¿Listo para una propuesta?</h2>
         <p style={{ margin: 0, opacity: 0.85 }}>
           Si ya tienes claridad sobre lo que necesitas, envíanos tu solicitud. Si prefieres, podemos orientarte primero.
@@ -237,7 +238,7 @@ export default function ServiciosPage() {
             Contacto
           </a>
         </div>
-      </footer>
-    </section>
+      </Reveal>
+    </Reveal>
   );
 }
