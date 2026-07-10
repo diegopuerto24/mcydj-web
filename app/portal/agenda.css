@@ -1,0 +1,264 @@
+.agendaToolbar{
+  display:grid;
+  grid-template-columns:auto minmax(150px,180px) minmax(170px,1fr) minmax(160px,220px) auto;
+  gap:10px;
+  align-items:center;
+  background:rgba(255,255,255,.94);
+}
+
+.agendaToolbar input,
+.agendaToolbar select,
+.field select{
+  width:100%;
+  min-height:42px;
+  border:1px solid rgba(22,21,14,.16);
+  border-radius:12px;
+  padding:10px 12px;
+  background:#fff;
+  color:var(--mcydj-ink);
+  font:inherit;
+}
+
+.viewSwitch{
+  display:flex;
+  gap:4px;
+  padding:4px;
+  border-radius:14px;
+  background:rgba(160,199,254,.25);
+}
+
+.viewSwitch button{
+  border:0;
+  border-radius:10px;
+  padding:9px 14px;
+  background:transparent;
+  color:var(--mcydj-ink);
+  font-weight:900;
+  cursor:pointer;
+}
+
+.viewSwitch button.active{
+  background:#fff;
+  box-shadow:0 1px 8px rgba(22,21,14,.12);
+}
+
+.calendarCard{
+  min-width:0;
+  overflow:hidden;
+}
+
+.calendarHeading{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:14px;
+}
+
+.calendarHeading h2{
+  margin:0;
+  font-size:22px;
+}
+
+.calendarHeading span{
+  padding:6px 10px;
+  border-radius:999px;
+  background:rgba(160,199,254,.28);
+  font-size:12px;
+  font-weight:900;
+}
+
+.dayView{
+  display:grid;
+  gap:10px;
+}
+
+.weekView{
+  display:grid;
+  grid-template-columns:repeat(7,minmax(170px,1fr));
+  gap:10px;
+  overflow-x:auto;
+  padding-bottom:6px;
+}
+
+.weekDay{
+  min-height:280px;
+  border:1px solid rgba(22,21,14,.12);
+  border-radius:18px;
+  background:rgba(255,255,255,.72);
+  overflow:hidden;
+}
+
+.weekDay > header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  padding:12px;
+  background:rgba(160,199,254,.2);
+  border-bottom:1px solid rgba(22,21,14,.1);
+}
+
+.weekDay > header strong{
+  text-transform:capitalize;
+  font-size:13px;
+}
+
+.weekDay > header span{
+  display:grid;
+  place-items:center;
+  min-width:24px;
+  height:24px;
+  border-radius:999px;
+  background:#fff;
+  font-size:12px;
+  font-weight:900;
+}
+
+.weekDay > div{
+  display:grid;
+  gap:8px;
+  padding:10px;
+}
+
+.weekDay > div > small{
+  padding:14px 8px;
+  text-align:center;
+  opacity:.5;
+  font-weight:800;
+}
+
+.weekView .reservationItem{
+  display:grid;
+  gap:8px;
+  padding:11px;
+  border-left-width:6px;
+}
+
+.weekView .reservationItem strong{
+  font-size:12px;
+}
+
+.weekView .reservationItem span,
+.weekView .reservationItem small{
+  font-size:11px;
+  overflow-wrap:anywhere;
+}
+
+.weekView .reservationActions{
+  justify-content:flex-start;
+}
+
+.weekView .reservationActions button{
+  padding:6px 8px;
+  font-size:11px;
+}
+
+.reservationItem{
+  position:relative;
+  border-left:6px solid #A0C7FE;
+  box-shadow:0 4px 14px rgba(22,21,14,.06);
+}
+
+.reservationItem.area-direccion{
+  border-left-color:#16150E;
+  background:linear-gradient(90deg,rgba(22,21,14,.07),#fff 26%);
+}
+
+.reservationItem.area-fiscal{
+  border-left-color:#F65904;
+  background:linear-gradient(90deg,rgba(246,89,4,.09),#fff 26%);
+}
+
+.reservationItem.area-contabilidad{
+  border-left-color:#A0C7FE;
+  background:linear-gradient(90deg,rgba(160,199,254,.2),#fff 26%);
+}
+
+.reservationItem.area-nominas{
+  border-left-color:#FFD84D;
+  background:linear-gradient(90deg,rgba(255,216,77,.22),#fff 26%);
+}
+
+.reservationItem.area-consultoria{
+  border-left-color:#70B77E;
+  background:linear-gradient(90deg,rgba(112,183,126,.13),#fff 26%);
+}
+
+.reservationItem.area-administracion{
+  border-left-color:#9B8AFB;
+  background:linear-gradient(90deg,rgba(155,138,251,.13),#fff 26%);
+}
+
+.fieldError{
+  color:#F65904;
+  font-weight:900;
+}
+
+.portalTopbarBlue{
+  background:linear-gradient(135deg,#A0C7FE,#dcecff 68%,rgba(246,89,4,.12));
+  border-color:rgba(56,104,161,.18);
+}
+
+.noticeBlue{
+  border-color:rgba(65,115,174,.2);
+  background:rgba(160,199,254,.22);
+}
+
+.roleBox button{
+  justify-self:start;
+  border:1px solid rgba(22,21,14,.16);
+  border-radius:999px;
+  padding:7px 11px;
+  background:#fff;
+  font-weight:900;
+  cursor:pointer;
+}
+
+.portalNav a{
+  display:block;
+  width:100%;
+  border-radius:14px;
+  padding:12px 14px;
+  color:var(--mcydj-ink);
+  text-decoration:none;
+  font-weight:900;
+}
+
+.portalNav a:hover,
+.portalNav a.active{
+  background:#fff;
+  box-shadow:0 1px 0 rgba(0,0,0,.08);
+}
+
+.btn:disabled,
+button:disabled{
+  cursor:not-allowed;
+  opacity:.5;
+}
+
+@media (max-width:1200px){
+  .agendaToolbar{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+
+  .agendaToolbar .viewSwitch,
+  .agendaToolbar .btn{
+    width:100%;
+  }
+}
+
+@media (max-width:760px){
+  .agendaToolbar{
+    grid-template-columns:1fr;
+  }
+
+  .weekView{
+    grid-template-columns:repeat(7,minmax(220px,1fr));
+  }
+
+  .calendarHeading{
+    align-items:flex-start;
+    flex-direction:column;
+  }
+}
