@@ -1,4 +1,5 @@
 import "./portal.css";
+import "./agenda.css";
 
 export const metadata = {
   title: "Portal MC&DJ | ERP interno",
