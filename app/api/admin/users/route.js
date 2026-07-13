@@ -106,7 +106,7 @@ export async function GET(request) {
   const { data, error } = await guard.clients.adminClient
     .from("profiles")
     .select(`
-      id,email,nombre,rol,activo,personal_email,last_login_at,created_at,
+      id,email,nombre,rol,activo,role_id,area_id,personal_email,last_login_at,created_at,
       roles:role_id(id,code,name),
       areas:area_id(id,code,name),
       employees:employee_id(
