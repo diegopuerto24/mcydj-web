@@ -6,14 +6,18 @@ const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const resendApiKey = process.env.RESEND_API_KEY;
 const emailFrom = process.env.EMAIL_FROM || "noreply@mcydj.mx";
+const fallbackSiteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL || "https://mcydj.mx";
+
 function getRequestOrigin(request) {
-  const proto = request.headers.get("x-forwarded-proto") || "https";
+  const proto =
+    request.headers.get("x-forwarded-proto") || "https";
+
   const host =
     request.headers.get("x-forwarded-host") ||
     request.headers.get("host");
 
-  if (host) return `${proto}://${host}`;
-  return process.env.NEXT_PUBLIC_SITE_URL || "https://mcydj.mx";
+  return host ? `${proto}://${host}` : fallbackSiteUrl;
 }
 
 function json(data, status = 200) {
