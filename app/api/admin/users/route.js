@@ -117,7 +117,11 @@ export async function GET(request) {
     .order("nombre", { ascending: true });
 
   if (error) return json({ error: error.message }, 500);
-  return json({ users: data || [] });
+  const [{ data: roles }, { data: areas }] = await Promise.all([
+    guard.clients.adminClient.from("roles").select("id,code,name,level").eq("active", true).order("level", { ascending: true }),
+    guard.clients.adminClient.from("areas").select("id,code,name,sort_order").eq("active", true).order("sort_order", { ascending: true })
+  ]);
+  return json({ users: data || [], roles: roles || [], areas: areas || [] });
 }
 
 export async function POST(request) {
