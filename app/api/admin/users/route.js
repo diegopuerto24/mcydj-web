@@ -6,7 +6,15 @@ const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const resendApiKey = process.env.RESEND_API_KEY;
 const emailFrom = process.env.EMAIL_FROM || "noreply@mcydj.mx";
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://mcydj.mx";
+function getRequestOrigin(request) {
+  const proto = request.headers.get("x-forwarded-proto") || "https";
+  const host =
+    request.headers.get("x-forwarded-host") ||
+    request.headers.get("host");
+
+  if (host) return `${proto}://${host}`;
+  return process.env.NEXT_PUBLIC_SITE_URL || "https://mcydj.mx";
+}
 
 function json(data, status = 200) {
   return NextResponse.json(data, { status });
@@ -131,6 +139,7 @@ export async function POST(request) {
   const body = await request.json().catch(() => ({}));
   const action = body.action || "create";
   const { adminClient } = guard.clients;
+  const requestOrigin = getRequestOrigin(request);
 
   if (action === "create") {
     const firstName = String(body.first_name || "").trim();
@@ -161,7 +170,7 @@ export async function POST(request) {
       type: "invite",
       email: corporateEmail,
       options: {
-        redirectTo: `${siteUrl}/portal/activar-cuenta`,
+        redirectTo: `${requestOrigin}/portal/activar-cuenta`,
         data: { nombre: fullName, rol: role.code, personal_email: personalEmail }
       }
     });
@@ -265,7 +274,7 @@ export async function POST(request) {
     const { data: linkData, error: linkError } = await adminClient.auth.admin.generateLink({
       type: "recovery",
       email: profile.email,
-      options: { redirectTo: `${siteUrl}/portal/activar-cuenta` }
+      options: { redirectTo: `${requestOrigin}/portal/activar-cuenta` }
     });
     if (linkError || !linkData?.properties?.action_link) return json({ error: linkError?.message || "No fue posible generar el enlace." }, 500);
 
