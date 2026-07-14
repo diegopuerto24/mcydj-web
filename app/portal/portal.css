@@ -336,3 +336,138 @@
     justify-content:flex-start;
   }
 }
+
+.activateShell{
+  min-height:100vh;
+  display:grid;
+  place-items:center;
+  padding:24px;
+  background:linear-gradient(135deg,var(--mcydj-yellow),#fff 56%,rgba(160,199,254,.55));
+}
+
+.activateCard{
+  width:min(100%,560px);
+  display:grid;
+  gap:16px;
+}
+
+.activateCard h1{margin:0;font-size:clamp(32px,6vw,52px);letter-spacing:-.04em;}
+.activateCard .sectionTitle span{font-weight:900;opacity:.72;}
+
+.passwordInput{display:flex;gap:8px;}
+.passwordInput input{flex:1;}
+.passwordInput button,.userActions button{border:1px solid rgba(22,21,14,.16);border-radius:999px;background:#fff;padding:9px 12px;font-weight:900;cursor:pointer;}
+.strengthMeter{height:10px;border-radius:999px;background:rgba(22,21,14,.1);overflow:hidden;}
+.strengthMeter span{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#F65904,#FFD84D,#70B77E);transition:width .2s ease;}
+.fieldHelp{font-weight:800;opacity:.7;}
+.noticeError{border-color:rgba(246,89,4,.36);background:rgba(246,89,4,.14);}
+
+.usersAdminGrid{display:grid;grid-template-columns:minmax(300px,420px) 1fr;gap:16px;align-items:start;}
+.twoColumns{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.usersFilters{display:grid;grid-template-columns:2fr repeat(3,1fr);gap:10px;}
+.usersFilters input,.usersFilters select{width:100%;border:1px solid rgba(22,21,14,.16);border-radius:12px;padding:10px 12px;background:#fff;color:var(--mcydj-ink);font:inherit;}
+.usersTable{display:grid;gap:10px;}
+.userRow{display:flex;justify-content:space-between;gap:12px;padding:14px;border:1px solid rgba(22,21,14,.12);border-radius:16px;background:#fff;}
+.userRow div:first-child{display:grid;gap:4px;}
+.userRow span,.userRow small{opacity:.74;}
+.userActions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap;}
+.statusPill{border-radius:999px;padding:7px 10px;background:rgba(246,89,4,.12);font-weight:900;opacity:1!important;}
+.statusPill.active{background:rgba(112,183,126,.18);}
+
+@media (max-width:1100px){.usersAdminGrid,.usersFilters{grid-template-columns:1fr;}.userRow{display:grid;}.userActions{justify-content:flex-start;}}
+@media (max-width:620px){.twoColumns,.passwordInput{grid-template-columns:1fr;display:grid;}.passwordInput button{border-radius:12px;}}
+
+.portalMain .weekView{
+  grid-template-columns:repeat(7,minmax(0,1fr));
+  overflow-x:visible;
+}
+
+.monthView{
+  display:grid;
+  gap:14px;
+}
+
+.monthHeading{
+  align-items:center;
+}
+
+.monthNav{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+}
+
+.monthNav button{
+  border:1px solid rgba(22,21,14,.16);
+  border-radius:999px;
+  padding:8px 12px;
+  background:#fff;
+  font-weight:900;
+  cursor:pointer;
+}
+
+.monthGrid{
+  display:grid;
+  grid-template-columns:repeat(7,minmax(0,1fr));
+  gap:8px;
+}
+
+.monthDay{
+  min-height:116px;
+  display:grid;
+  align-content:start;
+  gap:5px;
+  border:1px solid rgba(22,21,14,.12);
+  border-radius:16px;
+  padding:10px;
+  background:rgba(255,255,255,.82);
+  color:var(--mcydj-ink);
+  text-align:left;
+  cursor:pointer;
+}
+
+.monthDay.muted{
+  opacity:.45;
+}
+
+.monthDay strong{
+  font-size:14px;
+}
+
+.monthDay span,
+.monthDay small{
+  display:block;
+  overflow:hidden;
+  border-left:4px solid #A0C7FE;
+  border-radius:8px;
+  padding:4px 6px;
+  background:#fff;
+  font-size:11px;
+  font-weight:900;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.monthDay span.area-fiscal{border-left-color:#F65904;}
+.monthDay span.area-direccion{border-left-color:#16150E;}
+.monthDay span.area-contabilidad{border-left-color:#A0C7FE;}
+.monthDay span.area-nominas{border-left-color:#FFD84D;}
+.monthDay span.area-consultoria{border-left-color:#70B77E;}
+.monthDay span.area-administracion{border-left-color:#9B8AFB;}
+
+@media (max-width:900px){
+  .portalMain .weekView,
+  .monthGrid{
+    grid-template-columns:repeat(7,minmax(180px,1fr));
+    overflow-x:auto;
+  }
+
+  .monthHeading{
+    align-items:flex-start;
+  }
+
+  .monthNav{
+    justify-content:flex-start;
+  }
+}
