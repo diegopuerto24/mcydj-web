@@ -253,19 +253,51 @@ export default function PortalPage() {
     const notas = encodeNotes(form.area, form.reason, form.notes);
     if (editingId) {
       const reservation = activeReservations.find((item) => item.id === editingId);
-      if (!canUseAgendaAdmin && reservation?.userId !== userId) { setMessage("No puedes modificar reservas de otro usuario."); return; }
-      let updateQuery = supabase.from("reservations").update({ fecha: form.date, hora_inicio: form.start, hora_fin: form.end, notas, updated_at: new Date().toISOString(), updated_by_email: userEmail }).eq("id", editingId);
-      if (!canUseAgendaAdmin) updateQuery = updateQuery.eq("user_id", userId);
-      const { error } = await updateQuery;
-      if (error) { setMessage(`No se pudo reagendar: ${error.message}`); return; }
-      await addLog(editingId, "Reserva reagendada", `${userName} movió NOMIPAQ al ${form.date} de ${form.start} a ${form.end}.`);
-      await notify("updated", form); await loadReservations(); resetForm(); setMessage("Reserva reagendada correctamente."); return;
+      if (!reservation) { setMessage("No se encontró la reserva seleccionada para reagendar."); return; }
+      if (!canUseAgendaAdmin && reservation.userId !== userId) { setMessage("No puedes modificar reservas de otro usuario."); return; }
+      let query = supabase
+        .from("reservations")
+        .update({
+          fecha: form.date,
+          hora_inicio: form.start,
+          hora_fin: form.end,
+          notas,
+          updated_at: new Date().toISOString(),
+          updated_by_email: userEmail
+        })
+        .eq("id", editingId);
+
+      if (!canUseAgendaAdmin) {
+        query = query.eq("user_id", userId);
+      }
+
+      const { data, error } = await query.select(
+        "id,user_id,fecha,hora_inicio,hora_fin,estado,notas,created_by_email,created_at,updated_at"
+      ).maybeSingle();
+
+      if (error) {
+        setMessage(`No fue posible reagendar: ${error.message}`);
+        return;
+      }
+
+      if (!data) {
+        setMessage("No se actualizó la reserva. Verifica permisos o propiedad de la reserva.");
+        return;
+      }
+
+      const updatedReservation = mapReservation(data);
+      await addLog(data.id, "Reserva reagendada", `${userName} movió NOMIPAQ al ${updatedReservation.date} de ${updatedReservation.start} a ${updatedReservation.end}.`);
+      await notify("updated", updatedReservation);
+      await reloadData({ userId, role });
+      resetForm();
+      setMessage("Reserva reagendada correctamente.");
+      return;
     }
     const authenticatedUserId = userId || session.user.id;
     const { data, error } = await supabase.from("reservations").insert({ user_id: authenticatedUserId, fecha: form.date, hora_inicio: form.start, hora_fin: form.end, estado: "confirmada", notas, created_by_email: userEmail }).select("id").single();
     if (error) { setMessage(`No se pudo crear la reserva: ${error.message}`); return; }
     await addLog(data.id, "Reserva creada", `${userName} reservó NOMIPAQ el ${form.date} de ${form.start} a ${form.end}.`);
-    await notify("created", form); await loadReservations(); resetForm(); setMessage("Reserva creada correctamente.");
+    await notify("created", form); await reloadData({ userId, role }); resetForm(); setMessage("Reserva creada correctamente.");
   }
 
   function editReservation(r) { setEditingId(r.id); setForm({ date: r.date, start: r.start, end: r.end, area: r.area, reason: r.reason, notes: r.notes }); setFocusDate(r.date); setMessage("Edita los datos y guarda para reagendar."); }
@@ -277,7 +309,7 @@ export default function PortalPage() {
     const { error } = await cancelQuery;
     if (error) { setMessage(`No se pudo cancelar: ${error.message}`); return; }
     await addLog(r.id, "Reserva cancelada", `${userName} canceló NOMIPAQ el ${r.date} de ${r.start} a ${r.end}.`);
-    await notify("cancelled", r); await loadReservations(); setMessage("Reserva cancelada correctamente.");
+    await notify("cancelled", r); await reloadData({ userId, role }); setMessage("Reserva cancelada correctamente.");
   }
 
   function exportCSV() {
@@ -305,7 +337,7 @@ export default function PortalPage() {
           <button className="btn btn-secondary" onClick={exportCSV}>Exportar CSV</button>
         </section>
         <section className="agendaLayout">
-          <form className="portalCard reservationForm" onSubmit={handleSubmit}><div className="sectionTitle"><h2>{editingId ? "Reagendar reserva" : "Nueva reserva"}</h2><p>Bloqueo automático de empalmes.</p></div><Field label="Usuario"><input value={userName} readOnly /></Field><Field label="Fecha"><input type="date" min={todayISO()} value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} /></Field><div className="timeGrid"><Field label="Inicio"><input type="time" value={form.start} onChange={(e) => setForm({ ...form, start: e.target.value })} /></Field><Field label="Fin"><input type="time" value={form.end} onChange={(e) => setForm({ ...form, end: e.target.value })} /></Field></div><Field label="Área"><select value={form.area} onChange={(e) => setForm({ ...form, area: e.target.value })}>{areaOptions.map((area) => <option key={area}>{area}</option>)}</select></Field><Field label="Motivo"><select value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })}>{REASONS.map((reason) => <option key={reason}>{reason}</option>)}</select></Field><Field label="Notas"><textarea rows={3} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></Field>{formValidation ? <section className="notice">{formValidation}</section> : null}<div className="formActions"><button className="btn btn-primary" disabled={Boolean(formValidation)}>{editingId ? "Guardar cambio" : "Reservar"}</button>{editingId ? <button type="button" className="btn btn-secondary" onClick={resetForm}>Cancelar edición</button> : null}</div></form>
+          <form className="portalCard reservationForm" onSubmit={handleSubmit}><div className="sectionTitle"><h2>{editingId ? "Reagendar reserva" : "Nueva reserva"}</h2><p>Bloqueo automático de empalmes.</p></div><Field label="Usuario"><input value={userName} readOnly /></Field><Field label="Fecha"><input type="date" min={todayISO()} value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} /></Field><div className="timeGrid"><Field label="Inicio"><input type="time" value={form.start} onChange={(e) => setForm({ ...form, start: e.target.value })} /></Field><Field label="Fin"><input type="time" value={form.end} onChange={(e) => setForm({ ...form, end: e.target.value })} /></Field></div><Field label="Área"><select value={form.area} onChange={(e) => setForm({ ...form, area: e.target.value })}>{areaOptions.map((area) => <option key={area}>{area}</option>)}</select></Field><Field label="Motivo"><select value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })}>{REASONS.map((reason) => <option key={reason}>{reason}</option>)}</select></Field><Field label="Notas"><textarea rows={3} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></Field>{formValidation ? <section className="notice">{formValidation}</section> : null}<div className="formActions"><button type="submit" className="btn btn-primary" disabled={Boolean(formValidation)}>{editingId ? "Guardar cambios" : "Reservar"}</button>{editingId ? <button type="button" className="btn btn-secondary" onClick={resetForm}>Cancelar edición</button> : null}</div></form>
           <div className="portalCard calendarCard">
             {viewMode === "day" ? <div className="dayView"><div className="calendarHeading"><h2>{displayDate(focusDate)}</h2><span>{visibleReservations.length} reservas</span></div>{visibleReservations.length ? visibleReservations.map((r) => <ReservationCard key={r.id} reservation={r} onEdit={editReservation} onCancel={cancelReservation} />) : <p>No hay reservas para este día.</p>}</div> : null}
             {viewMode === "week" ? <div className="weekView">{weekDays.map((day) => <section className="weekDay" key={day}><header><strong>{displayDate(day)}</strong><span>{filteredReservations.filter((r) => r.date === day).length}</span></header><div>{filteredReservations.filter((r) => r.date === day).map((r) => <ReservationCard key={r.id} reservation={r} onEdit={editReservation} onCancel={cancelReservation} />)}{!filteredReservations.some((r) => r.date === day) ? <small>Disponible</small> : null}</div></section>)}</div> : null}

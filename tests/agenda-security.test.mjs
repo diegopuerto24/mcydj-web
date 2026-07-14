@@ -6,7 +6,7 @@ const sharedRls = readFileSync("supabase/migrations/20260714_fix_nomipaq_shared_
 const roleFix = readFileSync("supabase/migrations/20260714_fix_nomipaq_admin_roles.sql", "utf8");
 
 const loadReservationsBlock = portal.match(/async function loadReservations\([^)]*\)[\s\S]*?setReservations\(\(data \|\| \[\]\)\.map\(mapReservation\)\);\n  \}/)?.[0] || "";
-const updateBlock = portal.match(/let updateQuery[\s\S]*?const \{ error \} = await updateQuery;/)?.[0] || "";
+const updateBlock = portal.match(/let query = supabase[\s\S]*?\)\.maybeSingle\(\);/)?.[0] || "";
 const cancelBlock = portal.match(/let cancelQuery[\s\S]*?const \{ error \} = await cancelQuery;/)?.[0] || "";
 
 assert.match(portal, /\["director", "director_general", "sistemas"\]\.includes\(role\)/, "director, director_general and sistemas use agenda admin mode");
@@ -19,10 +19,15 @@ assert.match(portal, /await reloadData\(\{ userId: currentProfile\.id, role: cur
 assert.match(portal, /await reloadData\(\{ userId: currentProfile\.id, role: currentProfile\.rol \}\);\n    setMessage\("Sesión activa\. Agenda conectada\."\);/, "agenda is marked connected only after reloadData succeeds");
 assert.match(portal, /const conflict = activeReservations\.find/, "overlap detection uses globally loaded active reservations");
 assert.match(portal, /insert\(\{ user_id: authenticatedUserId,/, "new reservations store the authenticated profile/user id");
-assert.match(portal, /reservation\?\.userId !== userId/, "normal users are blocked from editing reservations owned by others");
-assert.match(updateBlock, /if \(!canUseAgendaAdmin\) updateQuery = updateQuery\.eq\("user_id", userId\)/, "normal-user updates are scoped by owner");
+assert.match(portal, /reservation\.userId !== userId/, "normal users are blocked from editing reservations owned by others");
+assert.match(updateBlock, /if \(!canUseAgendaAdmin\) \{[\s\S]*query = query\.eq\("user_id", userId\);[\s\S]*\}/, "normal-user updates are scoped by owner");
 assert.match(cancelBlock, /if \(!canUseAgendaAdmin\) cancelQuery = cancelQuery\.eq\("user_id", userId\)/, "normal-user cancellations are scoped by owner");
 assert.match(portal, /setMessage\("Cargando reservas\.\.\."\)/, "hydration shows an explicit loading-reservations message");
+assert.match(portal, /\.select\(\n        "id,user_id,fecha,hora_inicio,hora_fin,estado,notas,created_by_email,created_at,updated_at"\n      \)\.maybeSingle\(\)/, "reschedule update selects the updated reservation and verifies persistence");
+assert.match(portal, /No fue posible reagendar: \$\{error\.message\}/, "reschedule exposes Supabase update errors");
+assert.match(portal, /No se actualizó la reserva\. Verifica permisos o propiedad de la reserva\./, "reschedule reports when RLS filters update zero rows");
+assert.match(portal, /<button type="submit" className="btn btn-primary"[^>]*>\{editingId \? "Guardar cambios" : "Reservar"\}<\/button>/, "save changes button submits the reservation form");
+assert.match(portal, /await reloadData\(\{ userId, role \}\);\n      resetForm\(\);\n      setMessage\("Reserva reagendada correctamente\."\);/, "reschedule reloads with current context before resetting after success");
 assert.match(portal, /viewMode === "month"/, "portal exposes the month view");
 assert.match(portal, /setViewMode\("day"\)/, "clicking a month day switches to day view");
 
