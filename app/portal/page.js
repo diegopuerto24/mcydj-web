@@ -120,62 +120,94 @@ export default function PortalPage() {
   const canUseAgendaAdmin = canManageAgenda(role);
   const formValidation = validateBooking(form);
 
-  async function loadReservations(context = {}) {
+  async function loadReservations(_context = {}) {
     if (!supabase) return;
-    const effectiveUserId = context.userId || userId;
-    const effectiveRole = context.role || role;
-    let query = supabase.from("reservations").select("id,user_id,fecha,hora_inicio,hora_fin,estado,notas,created_by_email,created_at,updated_at").order("fecha", { ascending: true }).order("hora_inicio", { ascending: true });
-    if (!canManageAgenda(effectiveRole)) query = query.eq("user_id", effectiveUserId);
-    const { data, error } = await query;
-    if (error) { setMessage(`No fue posible leer reservas: ${error.message}`); return; }
+    const { data, error } = await supabase.from("reservations").select("id,user_id,fecha,hora_inicio,hora_fin,estado,notas,created_by_email,created_at,updated_at").order("fecha", { ascending: true }).order("hora_inicio", { ascending: true });
+    if (error) throw error;
     setReservations((data || []).map(mapReservation));
   }
 
-  async function loadLogs() {
+  async function loadLogs(_context = {}) {
     if (!supabase) return;
-    const { data } = await supabase.from("reservation_logs").select("id,reservation_id,accion,detalle,created_at").order("created_at", { ascending: false }).limit(30);
+    const { data, error } = await supabase.from("reservation_logs").select("id,reservation_id,accion,detalle,created_at").order("created_at", { ascending: false }).limit(30);
+    if (error) throw error;
     setLogs((data || []).map((row) => ({ id: row.id, action: row.accion, detail: row.detalle || "", date: String(row.created_at || "").slice(0, 10) })));
   }
 
-  async function loadCatalogs() {
+  async function loadCatalogs(_context = {}) {
     if (!supabase) return;
-    const [{ data: rolesData }, { data: areasData }] = await Promise.all([
+    const [{ data: rolesData, error: rolesError }, { data: areasData, error: areasError }] = await Promise.all([
       supabase.from("roles").select("id,code,name,level").eq("active", true).order("level", { ascending: true }),
       supabase.from("areas").select("id,code,name,sort_order").eq("active", true).order("sort_order", { ascending: true })
     ]);
+    if (rolesError) throw rolesError;
+    if (areasError) throw areasError;
     setRoles(rolesData || []);
     setAreas(areasData || []);
     setForm((current) => ({ ...current, area: current.area || areasData?.[0]?.name || "" }));
   }
 
-  async function reloadData() { await Promise.all([loadReservations(), loadLogs(), loadCatalogs()]); }
+  async function reloadData(context) { await Promise.all([loadReservations(context), loadLogs(context), loadCatalogs(context)]); }
+
+  async function hydratePortal(currentSession) {
+    if (!currentSession?.user) {
+      setSession(null);
+      setProfile(null);
+      setReservations([]);
+      setLogs([]);
+      setMessage("Inicia sesión para usar la Agenda NOMIPAQ.");
+      return;
+    }
+
+    setMessage("Cargando reservas...");
+    const { data: userData, error: userError } = await supabase.auth.getUser();
+    if (userError || !userData?.user) throw userError || new Error("No se pudo validar la sesión.");
+
+    const { data: profileData, error: profileError } = await supabase
+      .from("profiles")
+      .select("id,email,nombre,rol,activo")
+      .eq("id", userData.user.id)
+      .maybeSingle();
+    if (profileError) throw profileError;
+
+    const currentProfile = profileData || {
+      id: userData.user.id,
+      email: userData.user.email,
+      nombre: userData.user.email,
+      rol: "consultor",
+      activo: true
+    };
+
+    setSession(currentSession);
+    setProfile(currentProfile);
+    await reloadData({ userId: currentProfile.id, role: currentProfile.rol });
+    setMessage("Sesión activa. Agenda conectada.");
+  }
+
+  function handleHydrationError(error) {
+    setMessage(`No fue posible cargar la agenda: ${error?.message || "Error desconocido"}`);
+  }
 
   useEffect(() => {
     async function boot() {
       if (!isSupabaseConfigured || !supabase) { setMessage("Supabase no está configurado."); setLoading(false); return; }
-      const { data } = await supabase.auth.getSession();
-      const currentSession = data?.session || null;
-      setSession(currentSession);
-      if (currentSession?.user?.email) {
-        const { data: profileData } = await supabase.from("profiles").select("id,email,nombre,rol,activo").eq("email", currentSession.user.email).maybeSingle();
-        const currentProfile = profileData || { id: currentSession.user.id, email: currentSession.user.email, nombre: currentSession.user.email, rol: "consultor", activo: true };
-        setProfile(currentProfile);
-        await reloadData();
-        setMessage("Sesión activa. Agenda conectada.");
-      } else setMessage("Inicia sesión para usar la Agenda NOMIPAQ.");
-      setLoading(false);
+      setLoading(true);
+      try {
+        const { data } = await supabase.auth.getSession();
+        await hydratePortal(data?.session || null);
+      } catch (error) {
+        handleHydrationError(error);
+      } finally {
+        setLoading(false);
+      }
     }
     boot();
-    const { data: listener } = supabase?.auth.onAuthStateChange(async (_event, newSession) => {
-      setSession(newSession);
-      if (newSession?.user?.email) {
-        const { data: profileData } = await supabase.from("profiles").select("id,email,nombre,rol,activo").eq("email", newSession.user.email).maybeSingle();
-        const currentProfile = profileData || { id: newSession.user.id, email: newSession.user.email, nombre: newSession.user.email, rol: "consultor", activo: true };
-        setProfile(currentProfile);
-        await reloadData();
-        setMessage("Sesión activa. Agenda conectada.");
-      }
-      else { setProfile(null); setReservations([]); setLogs([]); }
+    const { data: listener } = supabase?.auth.onAuthStateChange((event, newSession) => {
+      if (event === "INITIAL_SESSION") return;
+      setLoading(true);
+      setTimeout(() => {
+        hydratePortal(newSession).catch(handleHydrationError).finally(() => setLoading(false));
+      }, 0);
     }) || { data: null };
     return () => listener?.subscription?.unsubscribe?.();
   }, []);
@@ -255,7 +287,7 @@ export default function PortalPage() {
     const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = `agenda-nomipaq-${focusDate}.csv`; link.click(); URL.revokeObjectURL(link.href);
   }
 
-  if (loading) return <main className="portalMain"><section className="portalCard emptyState"><h1>Cargando ERP MC&amp;DJ...</h1></section></main>;
+  if (loading) return <main className="portalMain"><section className="portalCard emptyState"><h1>{message || "Cargando reservas..."}</h1></section></main>;
   if (!session) return <main className="portalShell"><section className="portalMain"><form className="portalCard reservationForm" onSubmit={handleLogin} style={{ maxWidth: 520, margin: "48px auto" }}><div className="sectionTitle"><h1>MC&amp;DJ ERP</h1><p>Inicia sesión para usar la Agenda NOMIPAQ.</p></div><section className="notice">{message}</section><Field label="Correo"><input type="email" value={loginForm.email} onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })} /></Field><Field label="Contraseña"><input type="password" value={loginForm.password} onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })} /></Field><button className="btn btn-primary" disabled={authLoading}>{authLoading ? "Entrando..." : "Entrar"}</button></form></section></main>;
 
   return <div className="portalShell">
