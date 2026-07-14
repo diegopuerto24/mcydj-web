@@ -120,9 +120,13 @@ export default function PortalPage() {
   const canUseAgendaAdmin = canManageAgenda(role);
   const formValidation = validateBooking(form);
 
-  async function loadReservations() {
+  async function loadReservations(context = {}) {
     if (!supabase) return;
-    const { data, error } = await supabase.from("reservations").select("id,user_id,fecha,hora_inicio,hora_fin,estado,notas,created_by_email,created_at,updated_at").order("fecha", { ascending: true }).order("hora_inicio", { ascending: true });
+    const effectiveUserId = context.userId || userId;
+    const effectiveRole = context.role || role;
+    let query = supabase.from("reservations").select("id,user_id,fecha,hora_inicio,hora_fin,estado,notas,created_by_email,created_at,updated_at").order("fecha", { ascending: true }).order("hora_inicio", { ascending: true });
+    if (!canManageAgenda(effectiveRole)) query = query.eq("user_id", effectiveUserId);
+    const { data, error } = await query;
     if (error) { setMessage(`No fue posible leer reservas: ${error.message}`); return; }
     setReservations((data || []).map(mapReservation));
   }
