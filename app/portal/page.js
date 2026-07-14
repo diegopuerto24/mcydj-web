@@ -114,7 +114,6 @@ export default function PortalPage() {
   const roleLabel = roles.find((item) => item.code === role)?.name || role;
   const areaOptions = areas.map((area) => area.name);
   const canConfigure = ["director", "admin", "sistemas"].includes(role);
-  const canUseAgendaAdmin = canManageAgenda(role);
   const formValidation = validateBooking(form);
 
   async function loadReservations(context = {}) {
@@ -145,7 +144,7 @@ export default function PortalPage() {
     setForm((current) => ({ ...current, area: current.area || areasData?.[0]?.name || "" }));
   }
 
-  async function reloadData(context = {}) { await Promise.all([loadReservations(context), loadLogs(), loadCatalogs()]); }
+  async function reloadData() { await Promise.all([loadReservations(), loadLogs(), loadCatalogs()]); }
 
   useEffect(() => {
     async function boot() {

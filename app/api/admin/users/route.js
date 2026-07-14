@@ -278,9 +278,7 @@ export async function POST(request) {
     const { data: linkData, error: linkError } = await adminClient.auth.admin.generateLink({
       type: "recovery",
       email: profile.email,
-      options: {
-        redirectTo: `${requestOrigin}/portal/activar-cuenta`
-      }
+      options: { redirectTo: `${requestOrigin}/portal/activar-cuenta` }
     });
     if (linkError || !linkData?.properties?.action_link) return json({ error: linkError?.message || "No fue posible generar el enlace." }, 500);
 
