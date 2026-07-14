@@ -44,6 +44,10 @@ function validateBooking(form) {
   return "";
 }
 
+function canManageAgenda(role) {
+  return ["director_general", "sistemas"].includes(role);
+}
+
 function mapReservation(row) {
   const parsed = decodeNotes(row.notas || "");
   return {
@@ -112,16 +116,20 @@ export default function PortalPage() {
   const canConfigure = ["director", "admin", "sistemas"].includes(role);
   const formValidation = validateBooking(form);
 
-  async function loadReservations() {
+  async function loadReservations(context = {}) {
     if (!supabase) return;
-    const { data, error } = await supabase.from("reservations").select("id,user_id,fecha,hora_inicio,hora_fin,estado,notas,created_by_email,created_at,updated_at").order("fecha", { ascending: true }).order("hora_inicio", { ascending: true });
+    const effectiveUserId = context.userId || userId;
+    const effectiveRole = context.role || role;
+    let query = supabase.from("reservations").select("id,user_id,fecha,hora_inicio,hora_fin,estado,notas,created_by_email,created_at,updated_at").order("fecha", { ascending: true }).order("hora_inicio", { ascending: true });
+    if (!canManageAgenda(effectiveRole)) query = query.eq("user_id", effectiveUserId);
+    const { data, error } = await query;
     if (error) { setMessage(`No fue posible leer reservas: ${error.message}`); return; }
     setReservations((data || []).map(mapReservation));
   }
 
   async function loadLogs() {
     if (!supabase) return;
-    const { data } = await supabase.from("reservation_logs").select("id,accion,detalle,created_at").order("created_at", { ascending: false }).limit(30);
+    const { data } = await supabase.from("reservation_logs").select("id,reservation_id,accion,detalle,created_at").order("created_at", { ascending: false }).limit(30);
     setLogs((data || []).map((row) => ({ id: row.id, action: row.accion, detail: row.detalle || "", date: String(row.created_at || "").slice(0, 10) })));
   }
 
@@ -146,8 +154,9 @@ export default function PortalPage() {
       setSession(currentSession);
       if (currentSession?.user?.email) {
         const { data: profileData } = await supabase.from("profiles").select("id,email,nombre,rol,activo").eq("email", currentSession.user.email).maybeSingle();
-        setProfile(profileData || { id: currentSession.user.id, email: currentSession.user.email, nombre: currentSession.user.email, rol: "consultor", activo: true });
-        await reloadData();
+        const currentProfile = profileData || { id: currentSession.user.id, email: currentSession.user.email, nombre: currentSession.user.email, rol: "consultor", activo: true };
+        setProfile(currentProfile);
+        await reloadData({ userId: currentProfile.id, role: currentProfile.rol });
         setMessage("Sesión activa. Agenda conectada.");
       } else setMessage("Inicia sesión para usar la Agenda NOMIPAQ.");
       setLoading(false);
@@ -155,7 +164,13 @@ export default function PortalPage() {
     boot();
     const { data: listener } = supabase?.auth.onAuthStateChange(async (_event, newSession) => {
       setSession(newSession);
-      if (newSession?.user?.email) { await reloadData(); setMessage("Sesión activa. Agenda conectada."); }
+      if (newSession?.user?.email) {
+        const { data: profileData } = await supabase.from("profiles").select("id,email,nombre,rol,activo").eq("email", newSession.user.email).maybeSingle();
+        const currentProfile = profileData || { id: newSession.user.id, email: newSession.user.email, nombre: newSession.user.email, rol: "consultor", activo: true };
+        setProfile(currentProfile);
+        await reloadData({ userId: currentProfile.id, role: currentProfile.rol });
+        setMessage("Sesión activa. Agenda conectada.");
+      }
       else { setProfile(null); setReservations([]); setLogs([]); }
     }) || { data: null };
     return () => listener?.subscription?.unsubscribe?.();
@@ -196,12 +211,17 @@ export default function PortalPage() {
     if (conflict) { setMessage(`Horario no disponible. Ya existe reserva de ${conflict.start} a ${conflict.end} para ${conflict.email}.`); return; }
     const notas = encodeNotes(form.area, form.reason, form.notes);
     if (editingId) {
-      const { error } = await supabase.from("reservations").update({ fecha: form.date, hora_inicio: form.start, hora_fin: form.end, notas, updated_at: new Date().toISOString(), updated_by_email: userEmail }).eq("id", editingId);
+      const reservation = activeReservations.find((item) => item.id === editingId);
+      if (!canUseAgendaAdmin && reservation?.userId !== userId) { setMessage("No puedes modificar reservas de otro usuario."); return; }
+      let updateQuery = supabase.from("reservations").update({ fecha: form.date, hora_inicio: form.start, hora_fin: form.end, notas, updated_at: new Date().toISOString(), updated_by_email: userEmail }).eq("id", editingId);
+      if (!canUseAgendaAdmin) updateQuery = updateQuery.eq("user_id", userId);
+      const { error } = await updateQuery;
       if (error) { setMessage(`No se pudo reagendar: ${error.message}`); return; }
       await addLog(editingId, "Reserva reagendada", `${userName} movió NOMIPAQ al ${form.date} de ${form.start} a ${form.end}.`);
       await notify("updated", form); await loadReservations(); resetForm(); setMessage("Reserva reagendada correctamente."); return;
     }
-    const { data, error } = await supabase.from("reservations").insert({ user_id: userId || session.user.id, fecha: form.date, hora_inicio: form.start, hora_fin: form.end, estado: "confirmada", notas, created_by_email: userEmail }).select("id").single();
+    const authenticatedUserId = userId || session.user.id;
+    const { data, error } = await supabase.from("reservations").insert({ user_id: authenticatedUserId, fecha: form.date, hora_inicio: form.start, hora_fin: form.end, estado: "confirmada", notas, created_by_email: userEmail }).select("id").single();
     if (error) { setMessage(`No se pudo crear la reserva: ${error.message}`); return; }
     await addLog(data.id, "Reserva creada", `${userName} reservó NOMIPAQ el ${form.date} de ${form.start} a ${form.end}.`);
     await notify("created", form); await loadReservations(); resetForm(); setMessage("Reserva creada correctamente.");
@@ -210,7 +230,10 @@ export default function PortalPage() {
   function editReservation(r) { setEditingId(r.id); setForm({ date: r.date, start: r.start, end: r.end, area: r.area, reason: r.reason, notes: r.notes }); setFocusDate(r.date); setMessage("Edita los datos y guarda para reagendar."); }
 
   async function cancelReservation(r) {
-    const { error } = await supabase.from("reservations").update({ estado: "cancelada", cancelled_at: new Date().toISOString(), cancelled_by_email: userEmail, updated_at: new Date().toISOString() }).eq("id", r.id);
+    if (!canUseAgendaAdmin && r.userId !== userId) { setMessage("No puedes cancelar reservas de otro usuario."); return; }
+    let cancelQuery = supabase.from("reservations").update({ estado: "cancelada", cancelled_at: new Date().toISOString(), cancelled_by_email: userEmail, updated_at: new Date().toISOString() }).eq("id", r.id);
+    if (!canUseAgendaAdmin) cancelQuery = cancelQuery.eq("user_id", userId);
+    const { error } = await cancelQuery;
     if (error) { setMessage(`No se pudo cancelar: ${error.message}`); return; }
     await addLog(r.id, "Reserva cancelada", `${userName} canceló NOMIPAQ el ${r.date} de ${r.start} a ${r.end}.`);
     await notify("cancelled", r); await loadReservations(); setMessage("Reserva cancelada correctamente.");
