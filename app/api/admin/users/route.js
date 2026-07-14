@@ -6,7 +6,19 @@ const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const resendApiKey = process.env.RESEND_API_KEY;
 const emailFrom = process.env.EMAIL_FROM || "noreply@mcydj.mx";
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://mcydj.mx";
+const fallbackSiteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL || "https://mcydj.mx";
+
+function getRequestOrigin(request) {
+  const proto =
+    request.headers.get("x-forwarded-proto") || "https";
+
+  const host =
+    request.headers.get("x-forwarded-host") ||
+    request.headers.get("host");
+
+  return host ? `${proto}://${host}` : fallbackSiteUrl;
+}
 
 function json(data, status = 200) {
   return NextResponse.json(data, { status });
@@ -106,7 +118,7 @@ export async function GET(request) {
   const { data, error } = await guard.clients.adminClient
     .from("profiles")
     .select(`
-      id,email,nombre,rol,activo,personal_email,last_login_at,created_at,
+      id,email,nombre,rol,activo,role_id,area_id,personal_email,last_login_at,created_at,
       roles:role_id(id,code,name),
       areas:area_id(id,code,name),
       employees:employee_id(
@@ -117,7 +129,11 @@ export async function GET(request) {
     .order("nombre", { ascending: true });
 
   if (error) return json({ error: error.message }, 500);
-  return json({ users: data || [] });
+  const [{ data: roles }, { data: areas }] = await Promise.all([
+    guard.clients.adminClient.from("roles").select("id,code,name,level").eq("active", true).order("level", { ascending: true }),
+    guard.clients.adminClient.from("areas").select("id,code,name,sort_order").eq("active", true).order("sort_order", { ascending: true })
+  ]);
+  return json({ users: data || [], roles: roles || [], areas: areas || [] });
 }
 
 export async function POST(request) {
@@ -127,6 +143,7 @@ export async function POST(request) {
   const body = await request.json().catch(() => ({}));
   const action = body.action || "create";
   const { adminClient } = guard.clients;
+  const requestOrigin = getRequestOrigin(request);
 
   if (action === "create") {
     const firstName = String(body.first_name || "").trim();
@@ -157,7 +174,7 @@ export async function POST(request) {
       type: "invite",
       email: corporateEmail,
       options: {
-        redirectTo: `${siteUrl}/portal/activar-cuenta`,
+        redirectTo: `${requestOrigin}/portal/activar-cuenta`,
         data: { nombre: fullName, rol: role.code, personal_email: personalEmail }
       }
     });
@@ -261,7 +278,9 @@ export async function POST(request) {
     const { data: linkData, error: linkError } = await adminClient.auth.admin.generateLink({
       type: "recovery",
       email: profile.email,
-      options: { redirectTo: `${siteUrl}/portal/activar-cuenta` }
+      options: {
+        redirectTo: `${requestOrigin}/portal/activar-cuenta`
+      }
     });
     if (linkError || !linkData?.properties?.action_link) return json({ error: linkError?.message || "No fue posible generar el enlace." }, 500);
 
