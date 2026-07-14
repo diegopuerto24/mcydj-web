@@ -25,11 +25,7 @@ begin
     drop policy if exists reservations_user_select on public.reservations;
     create policy reservations_user_select on public.reservations
       for select to authenticated
-      using (
-        public.can_manage_nomipaq_agenda()
-        or user_id = auth.uid()
-        or user_id = public.current_profile_id()
-      );
+      using (true);
 
     drop policy if exists reservations_user_insert on public.reservations;
     create policy reservations_user_insert on public.reservations
@@ -74,15 +70,10 @@ begin
     create policy reservation_logs_user_select on public.reservation_logs
       for select to authenticated
       using (
-        public.can_manage_nomipaq_agenda()
-        or exists (
+        exists (
           select 1
           from public.reservations r
           where r.id = reservation_id
-            and (
-              r.user_id = auth.uid()
-              or r.user_id = public.current_profile_id()
-            )
         )
       );
 

@@ -376,3 +376,98 @@
 
 @media (max-width:1100px){.usersAdminGrid,.usersFilters{grid-template-columns:1fr;}.userRow{display:grid;}.userActions{justify-content:flex-start;}}
 @media (max-width:620px){.twoColumns,.passwordInput{grid-template-columns:1fr;display:grid;}.passwordInput button{border-radius:12px;}}
+
+.portalMain .weekView{
+  grid-template-columns:repeat(7,minmax(0,1fr));
+  overflow-x:visible;
+}
+
+.monthView{
+  display:grid;
+  gap:14px;
+}
+
+.monthHeading{
+  align-items:center;
+}
+
+.monthNav{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+}
+
+.monthNav button{
+  border:1px solid rgba(22,21,14,.16);
+  border-radius:999px;
+  padding:8px 12px;
+  background:#fff;
+  font-weight:900;
+  cursor:pointer;
+}
+
+.monthGrid{
+  display:grid;
+  grid-template-columns:repeat(7,minmax(0,1fr));
+  gap:8px;
+}
+
+.monthDay{
+  min-height:116px;
+  display:grid;
+  align-content:start;
+  gap:5px;
+  border:1px solid rgba(22,21,14,.12);
+  border-radius:16px;
+  padding:10px;
+  background:rgba(255,255,255,.82);
+  color:var(--mcydj-ink);
+  text-align:left;
+  cursor:pointer;
+}
+
+.monthDay.muted{
+  opacity:.45;
+}
+
+.monthDay strong{
+  font-size:14px;
+}
+
+.monthDay span,
+.monthDay small{
+  display:block;
+  overflow:hidden;
+  border-left:4px solid #A0C7FE;
+  border-radius:8px;
+  padding:4px 6px;
+  background:#fff;
+  font-size:11px;
+  font-weight:900;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.monthDay span.area-fiscal{border-left-color:#F65904;}
+.monthDay span.area-direccion{border-left-color:#16150E;}
+.monthDay span.area-contabilidad{border-left-color:#A0C7FE;}
+.monthDay span.area-nominas{border-left-color:#FFD84D;}
+.monthDay span.area-consultoria{border-left-color:#70B77E;}
+.monthDay span.area-administracion{border-left-color:#9B8AFB;}
+
+@media (max-width:900px){
+  .portalMain .weekView,
+  .monthGrid{
+    grid-template-columns:repeat(7,minmax(180px,1fr));
+    overflow-x:auto;
+  }
+
+  .monthHeading{
+    align-items:flex-start;
+  }
+
+  .monthNav{
+    justify-content:flex-start;
+  }
+}

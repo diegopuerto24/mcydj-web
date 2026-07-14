@@ -14,6 +14,9 @@ function toMinutes(time) { const [h, m] = String(time || "00:00").split(":").map
 function overlaps(aStart, aEnd, bStart, bEnd) { return aStart < bEnd && bStart < aEnd; }
 function addDays(dateISO, days) { const d = new Date(`${dateISO}T12:00:00`); d.setDate(d.getDate() + days); return d.toISOString().slice(0, 10); }
 function startOfWeek(dateISO) { const d = new Date(`${dateISO}T12:00:00`); const day = d.getDay() || 7; d.setDate(d.getDate() - day + 1); return d.toISOString().slice(0, 10); }
+function startOfMonth(dateISO) { return `${String(dateISO).slice(0, 7)}-01`; }
+function monthLabel(dateISO) { return new Intl.DateTimeFormat("es-MX", { month: "long", year: "numeric" }).format(new Date(`${startOfMonth(dateISO)}T12:00:00`)); }
+function buildMonthDays(dateISO) { const first = startOfMonth(dateISO); const start = startOfWeek(first); return Array.from({ length: 42 }, (_, i) => addDays(start, i)); }
 function displayDate(dateISO) { return new Intl.DateTimeFormat("es-MX", { weekday: "short", day: "2-digit", month: "short" }).format(new Date(`${dateISO}T12:00:00`)); }
 function areaClass(area) { return `area-${String(area || "general").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-")}`; }
 
@@ -45,7 +48,7 @@ function validateBooking(form) {
 }
 
 function canManageAgenda(role) {
-  return ["director_general", "sistemas"].includes(role);
+  return ["director", "director_general", "sistemas"].includes(role);
 }
 
 function mapReservation(row) {
@@ -114,6 +117,7 @@ export default function PortalPage() {
   const roleLabel = roles.find((item) => item.code === role)?.name || role;
   const areaOptions = areas.map((area) => area.name);
   const canConfigure = ["director", "admin", "sistemas"].includes(role);
+  const canUseAgendaAdmin = canManageAgenda(role);
   const formValidation = validateBooking(form);
 
   async function loadReservations(context = {}) {
@@ -156,7 +160,7 @@ export default function PortalPage() {
         const { data: profileData } = await supabase.from("profiles").select("id,email,nombre,rol,activo").eq("email", currentSession.user.email).maybeSingle();
         const currentProfile = profileData || { id: currentSession.user.id, email: currentSession.user.email, nombre: currentSession.user.email, rol: "consultor", activo: true };
         setProfile(currentProfile);
-        await reloadData({ userId: currentProfile.id, role: currentProfile.rol });
+        await reloadData();
         setMessage("Sesión activa. Agenda conectada.");
       } else setMessage("Inicia sesión para usar la Agenda NOMIPAQ.");
       setLoading(false);
@@ -168,7 +172,7 @@ export default function PortalPage() {
         const { data: profileData } = await supabase.from("profiles").select("id,email,nombre,rol,activo").eq("email", newSession.user.email).maybeSingle();
         const currentProfile = profileData || { id: newSession.user.id, email: newSession.user.email, nombre: newSession.user.email, rol: "consultor", activo: true };
         setProfile(currentProfile);
-        await reloadData({ userId: currentProfile.id, role: currentProfile.rol });
+        await reloadData();
         setMessage("Sesión activa. Agenda conectada.");
       }
       else { setProfile(null); setReservations([]); setLogs([]); }
@@ -181,7 +185,12 @@ export default function PortalPage() {
   const uniqueEmails = useMemo(() => [...new Set(activeReservations.map((r) => r.email).filter(Boolean))].sort(), [activeReservations]);
   const weekStart = startOfWeek(focusDate);
   const weekDays = useMemo(() => Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)), [weekStart]);
-  const visibleReservations = useMemo(() => viewMode === "day" ? filteredReservations.filter((r) => r.date === focusDate) : filteredReservations.filter((r) => r.date >= weekDays[0] && r.date <= weekDays[6]), [filteredReservations, viewMode, focusDate, weekDays]);
+  const monthDays = useMemo(() => buildMonthDays(focusDate), [focusDate]);
+  const visibleReservations = useMemo(() => {
+    if (viewMode === "day") return filteredReservations.filter((r) => r.date === focusDate);
+    if (viewMode === "month") return filteredReservations.filter((r) => r.date >= monthDays[0] && r.date <= monthDays[monthDays.length - 1]);
+    return filteredReservations.filter((r) => r.date >= weekDays[0] && r.date <= weekDays[6]);
+  }, [filteredReservations, viewMode, focusDate, weekDays, monthDays]);
   const totalHours = useMemo(() => activeReservations.reduce((sum, r) => sum + (toMinutes(r.end) - toMinutes(r.start)) / 60, 0), [activeReservations]);
 
   function resetForm() { setEditingId(null); setForm({ date: todayISO(), start: "08:00", end: "09:00", area: areaOptions[0] || "", reason: REASONS[0], notes: "" }); }
@@ -257,7 +266,7 @@ export default function PortalPage() {
       {active === "dashboard" ? <section className="portalGrid"><StatCard label="Reservas activas" value={activeReservations.length} hint="Agenda real" /><StatCard label="Horas reservadas" value={totalHours.toFixed(1)} hint="Acumulado" /><StatCard label="Usuarios" value={uniqueEmails.length} hint="Con reservas" /><StatCard label="Herramientas" value="5" hint="Catálogo inicial" /></section> : null}
       {active === "agenda" ? <>
         <section className="agendaToolbar portalCard">
-          <div className="viewSwitch"><button className={viewMode === "day" ? "active" : ""} onClick={() => setViewMode("day")}>Día</button><button className={viewMode === "week" ? "active" : ""} onClick={() => setViewMode("week")}>Semana</button></div>
+          <div className="viewSwitch"><button className={viewMode === "day" ? "active" : ""} onClick={() => setViewMode("day")}>Día</button><button className={viewMode === "week" ? "active" : ""} onClick={() => setViewMode("week")}>Semana</button><button className={viewMode === "month" ? "active" : ""} onClick={() => setViewMode("month")}>Mes</button></div>
           <input type="date" value={focusDate} onChange={(e) => setFocusDate(e.target.value)} />
           <select value={filterEmail} onChange={(e) => setFilterEmail(e.target.value)}><option value="">Todos los usuarios</option>{uniqueEmails.map((email) => <option key={email}>{email}</option>)}</select>
           <select value={filterArea} onChange={(e) => setFilterArea(e.target.value)}><option value="">Todas las áreas</option>{areaOptions.map((area) => <option key={area}>{area}</option>)}</select>
@@ -266,7 +275,9 @@ export default function PortalPage() {
         <section className="agendaLayout">
           <form className="portalCard reservationForm" onSubmit={handleSubmit}><div className="sectionTitle"><h2>{editingId ? "Reagendar reserva" : "Nueva reserva"}</h2><p>Bloqueo automático de empalmes.</p></div><Field label="Usuario"><input value={userName} readOnly /></Field><Field label="Fecha"><input type="date" min={todayISO()} value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} /></Field><div className="timeGrid"><Field label="Inicio"><input type="time" value={form.start} onChange={(e) => setForm({ ...form, start: e.target.value })} /></Field><Field label="Fin"><input type="time" value={form.end} onChange={(e) => setForm({ ...form, end: e.target.value })} /></Field></div><Field label="Área"><select value={form.area} onChange={(e) => setForm({ ...form, area: e.target.value })}>{areaOptions.map((area) => <option key={area}>{area}</option>)}</select></Field><Field label="Motivo"><select value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })}>{REASONS.map((reason) => <option key={reason}>{reason}</option>)}</select></Field><Field label="Notas"><textarea rows={3} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></Field>{formValidation ? <section className="notice">{formValidation}</section> : null}<div className="formActions"><button className="btn btn-primary" disabled={Boolean(formValidation)}>{editingId ? "Guardar cambio" : "Reservar"}</button>{editingId ? <button type="button" className="btn btn-secondary" onClick={resetForm}>Cancelar edición</button> : null}</div></form>
           <div className="portalCard calendarCard">
-            {viewMode === "day" ? <div className="dayView"><div className="calendarHeading"><h2>{displayDate(focusDate)}</h2><span>{visibleReservations.length} reservas</span></div>{visibleReservations.length ? visibleReservations.map((r) => <ReservationCard key={r.id} reservation={r} onEdit={editReservation} onCancel={cancelReservation} />) : <p>No hay reservas para este día.</p>}</div> : <div className="weekView">{weekDays.map((day) => <section className="weekDay" key={day}><header><strong>{displayDate(day)}</strong><span>{filteredReservations.filter((r) => r.date === day).length}</span></header><div>{filteredReservations.filter((r) => r.date === day).map((r) => <ReservationCard key={r.id} reservation={r} onEdit={editReservation} onCancel={cancelReservation} />)}{!filteredReservations.some((r) => r.date === day) ? <small>Disponible</small> : null}</div></section>)}</div>}
+            {viewMode === "day" ? <div className="dayView"><div className="calendarHeading"><h2>{displayDate(focusDate)}</h2><span>{visibleReservations.length} reservas</span></div>{visibleReservations.length ? visibleReservations.map((r) => <ReservationCard key={r.id} reservation={r} onEdit={editReservation} onCancel={cancelReservation} />) : <p>No hay reservas para este día.</p>}</div> : null}
+            {viewMode === "week" ? <div className="weekView">{weekDays.map((day) => <section className="weekDay" key={day}><header><strong>{displayDate(day)}</strong><span>{filteredReservations.filter((r) => r.date === day).length}</span></header><div>{filteredReservations.filter((r) => r.date === day).map((r) => <ReservationCard key={r.id} reservation={r} onEdit={editReservation} onCancel={cancelReservation} />)}{!filteredReservations.some((r) => r.date === day) ? <small>Disponible</small> : null}</div></section>)}</div> : null}
+            {viewMode === "month" ? <div className="monthView"><div className="calendarHeading monthHeading"><h2>{monthLabel(focusDate)}</h2><div className="monthNav"><button type="button" onClick={() => setFocusDate(addDays(startOfMonth(focusDate), -1))}>Mes anterior</button><button type="button" onClick={() => setFocusDate(todayISO())}>Hoy</button><button type="button" onClick={() => setFocusDate(addDays(addDays(startOfMonth(focusDate), 32).slice(0, 8) + "01", 0))}>Mes siguiente</button></div></div><div className="monthGrid">{monthDays.map((day) => { const dayReservations = filteredReservations.filter((r) => r.date === day); const inMonth = day.slice(0, 7) === focusDate.slice(0, 7); return <button type="button" className={`monthDay ${inMonth ? "" : "muted"}`} key={day} onClick={() => { setFocusDate(day); setViewMode("day"); }}><strong>{new Date(`${day}T12:00:00`).getDate()}</strong>{dayReservations.slice(0, 3).map((r) => <span className={areaClass(r.area)} key={r.id}>{r.start} · {r.area}</span>)}{dayReservations.length > 3 ? <small>+{dayReservations.length - 3} más</small> : null}</button>; })}</div></div> : null}
           </div>
           <div className="portalCard logCard"><div className="sectionTitle"><h2>Historial</h2></div><div className="logList">{logs.map((log) => <div key={log.id}><strong>{log.action}</strong><span>{log.date} · {log.detail}</span></div>)}</div></div>
         </section>
